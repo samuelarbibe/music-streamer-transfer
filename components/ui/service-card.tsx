@@ -31,7 +31,11 @@ const ServiceCard = forwardRef<HTMLDivElement, ServiceCardProps>(({ serviceId, h
           }
         </div>
         <p className="text-center text-sm text-gray-500">
-          Please log in to view your {services[serviceId].name} details
+          {
+            loggedIn
+              ? `Logged In`
+              : `Please log in to view your ${services[serviceId].name} details`
+          }
         </p>
       </CardContent>
       <CardFooter className="flex justify-center">

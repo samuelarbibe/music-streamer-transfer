@@ -4,18 +4,14 @@ import React, { useRef } from "react"
 
 import { Button } from "@/components/ui/button"
 
-import { ServiceId, services, useIsLoggedInWith } from "@/lib/services"
+import { ServiceId, services, sourceServiceIdAtom, targetServiceIdAtom, useIsLoggedInWith } from "@/lib/services"
 import ServiceSelect from "@/components/ui/service-select"
 import { ModeToggle } from "@/components/ui/mode-toggle"
 import Service from "@/components/services"
 
-import { atomWithStorage } from 'jotai/utils'
 import { useAtom } from "jotai/react"
 import { AnimatedBeam } from "@/components/magicui/animated-beam"
 import ColourfulText from "@/components/ui/colourful-text"
-
-export const sourceServiceIdAtom = atomWithStorage<ServiceId | null>("sourceServiceId", null)
-export const targetServiceIdAtom = atomWithStorage<ServiceId | null>("targetServiceId", null)
 
 export default function TransferPage() {
   const sourceRef = useRef<HTMLDivElement | null>(null)
@@ -34,8 +30,7 @@ export default function TransferPage() {
   }
 
   return (
-    // <BackgroundLines >
-    <div className="container mx-auto max-w-3xl min-h-screen flex flex-col items-center justify-center gap-10 px-5">
+    <div className="container mx-auto max-w-3xl min-h-screen flex flex-col items-center justify-center gap-10 px-5 pt-10">
       <h1 className="text-6xl font-bold text-center flex flex-col md:flex-row gap-4">
         <div>
           Transfer your
@@ -94,10 +89,9 @@ export default function TransferPage() {
           Continue
         </Button>
       </div>
-      <div className="absolute bottom-4 right-4">
+      <div className="absolute top-4 right-4">
         <ModeToggle />
       </div>
     </div>
-    // </BackgroundLines >
   )
 }

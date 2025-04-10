@@ -1,7 +1,17 @@
 import AppleMusicIcon from "@/assets/icons/apple.svg";
 import SpotifyIcon from "@/assets/icons/spotify.svg";
+import { atomWithStorage } from "jotai/utils";
 import { useSession } from "next-auth/react";
 import { SVGElementType } from "react";
+
+export const sourceServiceIdAtom = atomWithStorage<ServiceId | null>(
+  "sourceServiceId",
+  null
+);
+export const targetServiceIdAtom = atomWithStorage<ServiceId | null>(
+  "targetServiceId",
+  null
+);
 
 export type ServiceId = "apple" | "spotify";
 
