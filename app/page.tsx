@@ -30,7 +30,7 @@ export default function TransferPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-3xl min-h-screen flex flex-col items-center justify-center gap-10 px-5 pt-30 md:pt-0">
+    <div className="container mx-auto max-w-3xl min-h-screen flex flex-col items-center justify-center gap-10 px-5 py-30 md:pt-0">
       <h1 className="text-6xl font-bold text-center flex flex-col md:flex-row gap-4">
         <div>
           Transfer your
