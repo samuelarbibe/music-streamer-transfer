@@ -2,44 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query"
 import { AddTracksToPlaylistProps, Playlist, Track, useServiceAccessToken } from "."
 import { delay } from "../utils"
 import { useState } from "react";
-
-export const useGoogleTrackIds = (tracks: Track[]) => {
-  const requestDelay = 100
-  const accessToken = useServiceAccessToken("google")
-  const [progress, setProgress] = useState(0)
-
-  const res = useQuery<string[]>({
-    queryKey: ["google", "tracks", tracks],
-    queryFn: async () => {
-      const result: string[] = []
-
-      // TODO: remove slice
-      for (const track of tracks.slice(0, 1)) {
-        const res = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&q=${encodeURIComponent(`${track.name} ${track.artists[0]}`)}`,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        )
-        const data = await res.json()
-
-        const videoId = data.items?.[0].id?.videoId
-        if (videoId) {
-          result.push(videoId)
-        }
-
-        await delay(requestDelay)
-        setProgress((prev) => prev + 1)
-      }
-
-      return result
-    },
-    enabled: !!accessToken
-  })
-
-  return {
-    ...res,
-    progress
-  }
-}
+import axios from 'axios'
 
 type GooglePlaylist = {
   id: string
@@ -63,26 +26,91 @@ interface GooglePlaylistsResponse {
   items: GooglePlaylist[]
 }
 
-export const useGooglePlaylists = () => {
+export const useGooglePlaylistById = (playlistId?: string) => {
+  const accessToken = useServiceAccessToken("google")
+
+  return useQuery<Playlist>({
+    queryKey: ["google", "playlists", playlistId],
+    queryFn: async () => {
+      const { data } = await axios.get<GooglePlaylistsResponse>(
+        `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&id=${playlistId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      )
+
+      const playlist = data.items[0]
+
+      return {
+        id: playlist.id,
+        name: playlist.snippet.title,
+        description: playlist.snippet.description,
+        image: playlist.snippet.thumbnails.default.url,
+        trackCount: playlist.contentDetails.itemCount
+      }
+    },
+    enabled: !!accessToken && !!playlistId
+  })
+}
+
+export const useGoogleTrackIds = (tracks?: Track[]) => {
+  const requestDelay = 100
+  const accessToken = useServiceAccessToken("google")
+  const [progress, setProgress] = useState(0)
+
+  const res = useQuery<string[]>({
+    queryKey: ["google", "tracks", tracks],
+    queryFn: async () => {
+      if (!tracks) return []
+
+      const result: string[] = []
+
+      // TODO: remove slice
+      for (const track of tracks.slice(0, 1)) {
+        const { data } = await axios.get(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&q=${encodeURIComponent(`${track.name} ${track.artists[0]}`)}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        )
+
+        const videoId = data.items?.[0].id?.videoId
+        if (videoId) {
+          result.push(videoId)
+        }
+
+        setProgress((prev) => prev + 1)
+
+        await delay(requestDelay)
+      }
+
+      return result
+    },
+    enabled: !!accessToken && !!tracks
+  })
+
+  return {
+    ...res,
+    progress
+  }
+}
+
+export const useGooglePlaylists = (enabled: boolean) => {
   const accessToken = useServiceAccessToken("google")
 
   return useQuery<Playlist[]>({
     queryKey: ["google", "playlists"],
     queryFn: async () => {
-      const res = await fetch(
+      const { data } = await axios.get<GooglePlaylistsResponse>(
         "https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&mine=true&maxResults=50",
         { headers: { Authorization: `Bearer ${accessToken}` } }
       )
-      const data = await res.json() as GooglePlaylistsResponse
 
       return data.items.map<Playlist>((googlePlaylist) => ({
         id: googlePlaylist.id,
         name: googlePlaylist.snippet.title,
+        description: googlePlaylist.snippet.description,
         image: googlePlaylist.snippet.thumbnails.default.url,
         trackCount: googlePlaylist.contentDetails.itemCount
       }))
     },
-    enabled: !!accessToken
+    enabled: !!accessToken && !!enabled
   })
 }
 
@@ -91,24 +119,18 @@ export const useCreateGooglePlaylist = () => {
 
   return useMutation({
     mutationFn: async (playlist: Playlist) => {
-      const res = await fetch('https://www.googleapis.com/youtube/v3/playlists?part=snippet,status', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      const { data } = await axios.post('https://www.googleapis.com/youtube/v3/playlists?part=snippet,status',
+        {
           snippet: {
             title: playlist.name,
-            description: "Created by music-streamer-transfer"
+            description: playlist.description
           },
           status: {
             privacyStatus: 'private'
           }
-        })
-      });
-
-      const data = await res.json();
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
 
       return data.id as string
     }
@@ -122,13 +144,8 @@ export const useAddTracksToGooglePlaylist = () => {
   const res = useMutation({
     mutationFn: async ({ trackIds, playlistId }: AddTracksToPlaylistProps) => {
       for (const videoId of trackIds) {
-        await fetch('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        await axios.post('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet',
+          {
             snippet: {
               playlistId,
               resourceId: {
@@ -136,8 +153,9 @@ export const useAddTracksToGooglePlaylist = () => {
                 videoId
               }
             }
-          })
-        });
+          },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
 
         setProgress((prev) => prev + 1)
       }
@@ -161,12 +179,12 @@ type GooglePlaylistListItem = {
   }
 }
 
-type GooglePlaylistListResponse = {
+interface GooglePlaylistListResponse {
   items: GooglePlaylistListItem[]
   nextPageToken: string
 }
 
-export const useGooglePlaylistTracksById = (playlistId: string) => {
+export const useGooglePlaylistTracksById = (playlistId?: string) => {
   const limit = 50
   const limitDelay = 200
   const accessToken = useServiceAccessToken("google")
@@ -178,17 +196,15 @@ export const useGooglePlaylistTracksById = (playlistId: string) => {
       let nextPageToken: string | undefined = undefined
 
       do {
-        const res = await fetch(
-          `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=${limit}&playlistId=${playlistId}` +
-          (nextPageToken ? `&pageToken=${nextPageToken}` : ''),
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            }
-          }
-        )
+        let url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=${limit}&playlistId=${playlistId}`
+        if (nextPageToken) {
+          url = url.concat(`&pageToken=${nextPageToken}`)
+        }
 
-        const data = await res.json() as GooglePlaylistListResponse
+        const { data } = await axios.get<GooglePlaylistListResponse>(
+          url,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        )
 
         const tracks = data.items.map<Track>((item) => ({
           id: item.id.videoId,
@@ -203,6 +219,6 @@ export const useGooglePlaylistTracksById = (playlistId: string) => {
 
       return result
     },
-    enabled: !!accessToken
+    enabled: !!accessToken && !!playlistId
   })
 }

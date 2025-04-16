@@ -1,14 +1,13 @@
-import AppleMusicIcon from "@/assets/icons/apple.svg";
 import SpotifyIcon from "@/assets/icons/spotify.svg";
 import YoutubeIcon from "@/assets/icons/youtube.svg";
 import { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { atomWithStorage } from "jotai/utils";
 import { atom } from "jotai/vanilla";
 import { SVGElementType } from "react";
-import { useSpotifyPlaylistById, useSpotifyPlaylists, useSpotifyPlaylistTracksById } from "./spotify";
+import { useAddTracksToSpotifyPlaylist, useCreateSpotifyPlaylist, useSpotifyPlaylistById, useSpotifyPlaylists, useSpotifyPlaylistTracksById, useSpotifyTrackIds } from "./spotify";
 import { Session } from "next-auth";
 import { useAtom } from "jotai/react";
-import { useAddTracksToGooglePlaylist, useCreateGooglePlaylist, useGooglePlaylists, useGooglePlaylistTracksById, useGoogleTrackIds } from "./google";
+import { useAddTracksToGooglePlaylist, useCreateGooglePlaylist, useGooglePlaylistById, useGooglePlaylists, useGooglePlaylistTracksById, useGoogleTrackIds } from "./google";
 
 export const sourcePlaylistsIdsAtom = atom<Set<string>>(new Set<string>());
 
@@ -23,13 +22,12 @@ export const targetServiceIdAtom = atomWithStorage<ServiceId | null>(
 export const serviceSessionsAtom = atomWithStorage<Record<ServiceId, Session | null>>(
   "serviceSessions",
   {
-    apple: null,
     spotify: null,
     google: null
   }
 )
 
-export type ServiceId = "apple" | "spotify" | "google";
+export type ServiceId = "spotify" | "google";
 
 export type Track = {
   id: string
@@ -40,6 +38,7 @@ export type Track = {
 export type Playlist = {
   id: string
   name: string,
+  description: string,
   image: string,
   trackCount: number
 }
@@ -53,13 +52,6 @@ export type Service = {
 };
 
 export const services: Record<ServiceId, Service> = {
-  apple: {
-    name: "Apple Music",
-    bgColor: "apple",
-    textColor: "apple",
-    borderColor: "apple",
-    icon: AppleMusicIcon,
-  },
   spotify: {
     name: "Spotify",
     bgColor: "spotify",
@@ -98,48 +90,44 @@ export const useIsAccessTokenExpired = (serviceId: ServiceId | null) => {
 
 export const usePlaylists = (serviceId: ServiceId) => {
   const responses: Record<ServiceId, UseQueryResult<Playlist[]>> = {
-    spotify: useSpotifyPlaylists(),
-    apple: useSpotifyPlaylists(),
-    google: useGooglePlaylists()
+    spotify: useSpotifyPlaylists(serviceId === "spotify"),
+    google: useGooglePlaylists(serviceId === "google")
   }
 
   return responses[serviceId]
 }
 
 export const usePlaylistById = (
-  playlistId: string,
   serviceId: ServiceId,
+  playlistId?: string,
 ) => {
   const responses: Record<ServiceId, UseQueryResult<Playlist>> = {
-    spotify: useSpotifyPlaylistById(playlistId),
-    google: useSpotifyPlaylistById(playlistId),
-    apple: useSpotifyPlaylistById(playlistId)
+    spotify: useSpotifyPlaylistById(serviceId === "spotify" ? playlistId : undefined),
+    google: useGooglePlaylistById(serviceId === "google" ? playlistId : undefined),
   }
 
   return responses[serviceId]
 };
 
 export const usePlaylistTracksById = (
-  playlistId: string,
   serviceId: ServiceId,
+  playlistId?: string,
 ) => {
   const responses: Record<ServiceId, UseQueryResult<Track[]>> = {
-    spotify: useSpotifyPlaylistTracksById(playlistId),
-    google: useGooglePlaylistTracksById(playlistId),
-    apple: useSpotifyPlaylistTracksById(playlistId)
+    spotify: useSpotifyPlaylistTracksById(serviceId === "spotify" ? playlistId : undefined),
+    google: useGooglePlaylistTracksById(serviceId === "google" ? playlistId : undefined),
   }
 
   return responses[serviceId]
 };
 
 export const useTrackIds = (
-  tracks: Track[],
   serviceId: ServiceId,
+  tracks?: Track[],
 ) => {
   const responses: Record<ServiceId, UseQueryResult<string[]> & { progress: number }> = {
-    spotify: useGoogleTrackIds(tracks),
-    google: useGoogleTrackIds(tracks),
-    apple: useGoogleTrackIds(tracks)
+    spotify: useSpotifyTrackIds(serviceId === "spotify" ? tracks : undefined),
+    google: useGoogleTrackIds(serviceId === "google" ? tracks : undefined),
   }
 
   return responses[serviceId]
@@ -149,9 +137,8 @@ export const useCreatePlaylist = (
   serviceId: ServiceId,
 ) => {
   const responses: Record<ServiceId, UseMutationResult<string, Error, Playlist, unknown>> = {
-    spotify: useCreateGooglePlaylist(),
+    spotify: useCreateSpotifyPlaylist(),
     google: useCreateGooglePlaylist(),
-    apple: useCreateGooglePlaylist()
   }
 
   return responses[serviceId]
@@ -166,8 +153,7 @@ export const useAddTracksToPlaylist = (
 ) => {
   const responses: Record<ServiceId, AddTracksToPlaylistResult> = {
     spotify: useAddTracksToGooglePlaylist(),
-    google: useAddTracksToGooglePlaylist(),
-    apple: useAddTracksToGooglePlaylist()
+    google: useAddTracksToSpotifyPlaylist(),
   }
 
   return responses[serviceId]

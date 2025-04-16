@@ -3,27 +3,35 @@ import { PlaylistTransferContext, TransferStepProps } from "../transfer-step"
 import { LoaderCircle, Check } from "lucide-react"
 import { useContext, useEffect, useMemo, useRef } from "react"
 
-export default function CreateTargetPlaylistStep({ handleContinue }: TransferStepProps) {
+export default function CreateTargetPlaylistStep({ handleContinue, handleError }: TransferStepProps) {
   const requestSent = useRef(false)
 
   const { playlistId, sourceServiceId, targetServiceId, setTargetPlaylistId } = useContext(PlaylistTransferContext)
 
-  const { data: targetPlaylists } = usePlaylists(targetServiceId)
-  const { data: sourcePlaylist } = usePlaylistById(playlistId, sourceServiceId)
-  const { mutate: createPlaylist, isPending: isCreating } = useCreatePlaylist(targetServiceId)
+  const { data: targetPlaylists, error: targetPlaylistsError } = usePlaylists(targetServiceId)
+  const { data: sourcePlaylist, error: sourcePlaylistError } = usePlaylistById(sourceServiceId, playlistId)
+  const { mutate: createPlaylist, isPending: isCreating, error: createPlaylistError } = useCreatePlaylist(targetServiceId)
 
-  const targetPlaylistId = useMemo(() => {
+  const error = targetPlaylistsError || sourcePlaylistError || createPlaylistError
+
+  const existingTargetPlaylistId = useMemo(() => {
     if (!targetPlaylists || !sourcePlaylist) return false
 
     return targetPlaylists.find((targetPlaylist) => targetPlaylist.name === sourcePlaylist.name)?.id ?? null
   }, [sourcePlaylist, targetPlaylists])
 
   useEffect(() => {
-    if (targetPlaylistId === false || !sourcePlaylist || requestSent.current) return
+    if (error) {
+      handleError(error.message)
+    }
+  }, [error, handleError])
+
+  useEffect(() => {
+    if (existingTargetPlaylistId === false || !sourcePlaylist || requestSent.current) return
     requestSent.current = true
 
-    if (targetPlaylistId) {
-      setTargetPlaylistId(targetPlaylistId)
+    if (existingTargetPlaylistId) {
+      setTargetPlaylistId(existingTargetPlaylistId)
       handleContinue()
     } else {
       createPlaylist(sourcePlaylist, {
@@ -33,9 +41,18 @@ export default function CreateTargetPlaylistStep({ handleContinue }: TransferSte
         }
       })
     }
-  }, [createPlaylist, handleContinue, setTargetPlaylistId, sourcePlaylist, targetPlaylistId])
+  }, [createPlaylist, handleContinue, setTargetPlaylistId, sourcePlaylist, existingTargetPlaylistId])
 
   const getContent = () => {
+    if (error) {
+      return (
+        <>
+          <LoaderCircle className="size-5" />
+          <span className="text-sm">{`Error while creating playlist.`}</span>
+        </>
+      )
+    }
+
     if (isCreating) {
       return (
         <>
@@ -45,7 +62,7 @@ export default function CreateTargetPlaylistStep({ handleContinue }: TransferSte
       )
     }
 
-    if (targetPlaylistId) {
+    if (existingTargetPlaylistId) {
       return (
         <>
           <Check className="size-5 text-chart-2" />

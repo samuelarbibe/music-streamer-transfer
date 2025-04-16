@@ -3,16 +3,34 @@ import { PlaylistTransferContext, TransferStepProps } from "../transfer-step"
 import { LoaderCircle, Check } from "lucide-react"
 import { useContext, useEffect, useMemo, useRef } from "react"
 
-export default function AddTracksToPlaylistStep({ handleContinue }: TransferStepProps) {
+export default function AddTracksToPlaylistStep({ handleContinue, handleError }: TransferStepProps) {
   const requestSent = useRef(false)
   const { targetServiceId, targetTrackIds, targetPlaylistId } = useContext(PlaylistTransferContext)
-  const { mutate: addTracksToPlaylist, isPending, progress } = useAddTracksToPlaylist(targetServiceId)
 
-  const { data: existingTargetTracks, isLoading: isLoadingTargetPlaylistTracks } = usePlaylistTracksById(targetPlaylistId ?? "", targetServiceId)
+  const {
+    data: existingTargetTracks,
+    isLoading: isLoadingTargetPlaylistTracks,
+    error: existingTargetTracksError
+  } = usePlaylistTracksById(targetServiceId, targetPlaylistId)
+
+  const {
+    mutate: addTracksToPlaylist,
+    isPending,
+    progress,
+    error: addTracksToPlaylistError
+  } = useAddTracksToPlaylist(targetServiceId)
+
+  const error = existingTargetTracksError || addTracksToPlaylistError
 
   const tracksIdsToBeAdded = useMemo(() =>
     existingTargetTracks && targetTrackIds?.filter((trackId) => !existingTargetTracks?.find((track) => track.id === trackId))
     , [targetTrackIds, existingTargetTracks])
+
+  useEffect(() => {
+    if (error) {
+      handleError(error.message)
+    }
+  }, [error, handleError])
 
   useEffect(() => {
     if (tracksIdsToBeAdded && targetPlaylistId && !requestSent.current) {
@@ -28,6 +46,15 @@ export default function AddTracksToPlaylistStep({ handleContinue }: TransferStep
   }, [addTracksToPlaylist, handleContinue, targetPlaylistId, tracksIdsToBeAdded])
 
   const getContent = () => {
+    if (error) {
+      return (
+        <>
+          <LoaderCircle className="size-5" />
+          <span className="text-sm">{`Error while transfering playlist.`}</span>
+        </>
+      )
+    }
+
     if (tracksIdsToBeAdded?.length === 0) {
       return (
         <>
