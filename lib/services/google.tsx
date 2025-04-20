@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, UseMutationOptions, useQuery } from "@tanstack/react-query"
 import { AddTracksToPlaylistProps, Playlist, Track, useServiceAccessToken } from "."
 import { delay } from "../utils"
 import { useState } from "react";
@@ -30,7 +30,7 @@ export const useGooglePlaylistById = (playlistId?: string) => {
   const accessToken = useServiceAccessToken("google")
 
   return useQuery<Playlist>({
-    queryKey: ["google", "playlists", playlistId],
+    queryKey: ["google", "playlists", "id", playlistId],
     queryFn: async () => {
       const { data } = await axios.get<GooglePlaylistsResponse>(
         `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&id=${playlistId}`,
@@ -57,7 +57,7 @@ export const useGoogleTrackIds = (tracks?: Track[]) => {
   const [progress, setProgress] = useState(0)
 
   const res = useQuery<string[]>({
-    queryKey: ["google", "tracks", tracks],
+    queryKey: ["google", "tracks", tracks?.map((track) => track.id)],
     queryFn: async () => {
       if (!tracks) return []
 
@@ -114,7 +114,7 @@ export const useGooglePlaylists = (enabled: boolean) => {
   })
 }
 
-export const useCreateGooglePlaylist = () => {
+export const useCreateGooglePlaylist = (options: Partial<UseMutationOptions<string, Error, Playlist, unknown>>) => {
   const accessToken = useServiceAccessToken("google")
 
   return useMutation({
@@ -133,11 +133,12 @@ export const useCreateGooglePlaylist = () => {
       );
 
       return data.id as string
-    }
+    },
+    ...options
   })
 }
 
-export const useAddTracksToGooglePlaylist = () => {
+export const useAddTracksToGooglePlaylist = (options: Partial<UseMutationOptions<string, Error, AddTracksToPlaylistProps, unknown>>) => {
   const [progress, setProgress] = useState(0)
   const accessToken = useServiceAccessToken("google")
 
@@ -160,7 +161,8 @@ export const useAddTracksToGooglePlaylist = () => {
         setProgress((prev) => prev + 1)
       }
       return playlistId;
-    }
+    },
+    ...options
   })
 
   return {
@@ -170,11 +172,11 @@ export const useAddTracksToGooglePlaylist = () => {
 }
 
 type GooglePlaylistListItem = {
-  id: {
-    videoId: string
-  }
   snippet: {
     title: string
+    resourceId: {
+      videoId: string
+    }
     description: string
   }
 }
@@ -207,7 +209,7 @@ export const useGooglePlaylistTracksById = (playlistId?: string) => {
         )
 
         const tracks = data.items.map<Track>((item) => ({
-          id: item.id.videoId,
+          id: item.snippet.resourceId.videoId,
           name: item.snippet.title,
           artists: [item.snippet.title]
         }))

@@ -10,7 +10,12 @@ export default function CreateTargetPlaylistStep({ handleContinue, handleError }
 
   const { data: targetPlaylists, error: targetPlaylistsError } = usePlaylists(targetServiceId)
   const { data: sourcePlaylist, error: sourcePlaylistError } = usePlaylistById(sourceServiceId, playlistId)
-  const { mutate: createPlaylist, isPending: isCreating, error: createPlaylistError } = useCreatePlaylist(targetServiceId)
+  const { mutate: createPlaylist, error: createPlaylistError, isSuccess: isCreated } = useCreatePlaylist(targetServiceId, {
+    onSuccess: (createdPlaylistId) => {
+      setTargetPlaylistId(createdPlaylistId)
+      handleContinue()
+    }
+  })
 
   const error = targetPlaylistsError || sourcePlaylistError || createPlaylistError
 
@@ -34,12 +39,7 @@ export default function CreateTargetPlaylistStep({ handleContinue, handleError }
       setTargetPlaylistId(existingTargetPlaylistId)
       handleContinue()
     } else {
-      createPlaylist(sourcePlaylist, {
-        onSuccess: (createdPlaylistId) => {
-          setTargetPlaylistId(createdPlaylistId)
-          handleContinue()
-        }
-      })
+      createPlaylist(sourcePlaylist)
     }
   }, [createPlaylist, handleContinue, setTargetPlaylistId, sourcePlaylist, existingTargetPlaylistId])
 
@@ -53,11 +53,11 @@ export default function CreateTargetPlaylistStep({ handleContinue, handleError }
       )
     }
 
-    if (isCreating) {
+    if (isCreated) {
       return (
         <>
-          <LoaderCircle className="size-5 animate-spin" />
-          <span className="text-sm animate-pulse">{`Creating Playlist "${sourcePlaylist?.name}" in ${services[targetServiceId].name}...`}</span>
+          <Check className="size-5 text-chart-2" />
+          <span className="text-sm">{`Playlist "${sourcePlaylist?.name}" Created in ${services[targetServiceId].name}.`}</span>
         </>
       )
     }
@@ -73,8 +73,8 @@ export default function CreateTargetPlaylistStep({ handleContinue, handleError }
 
     return (
       <>
-        <Check className="size-5 text-chart-2" />
-        <span className="text-sm">{`Playlist "${sourcePlaylist?.name}" Created in ${services[targetServiceId].name}.`}</span>
+        <LoaderCircle className="size-5 animate-spin" />
+        <span className="text-sm animate-pulse">{`Creating Playlist "${sourcePlaylist?.name}" in ${services[targetServiceId].name}...`}</span>
       </>
     )
   }

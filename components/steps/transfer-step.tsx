@@ -1,7 +1,7 @@
 import { IStepProps } from "@/app/page";
 import { useAtom } from "jotai/react";
 import { ServiceId, sourcePlaylistsIdsAtom, Track } from "@/lib/services";
-import { createContext, Dispatch, SetStateAction, useMemo, useState } from "react";
+import { createContext, Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "../ui/card";
 import { usePlaylistById } from "@/lib/services/index";
 import LoadSourceTracksStep from "./transfer/load-source-tracks-step";
@@ -44,7 +44,7 @@ export const PlaylistTransferContext = createContext<PlaylistTransferContextType
 
 function PlaylistTransfer(props: PlaylistTransferProps) {
   const [currentStep, setCurrentStep] = useState(0)
-  const [error, setError] = useState<string>("Failed while doing something something")
+  const [error, setError] = useState<string>()
 
   const [sourceTracks, setSourceTracks] = useState<Track[]>()
   const [targetTrackIds, setTargetTrackIds] = useState<string[]>()
@@ -52,17 +52,19 @@ function PlaylistTransfer(props: PlaylistTransferProps) {
 
   const { data: sourcePlaylist } = usePlaylistById(props.sourceServiceId, props.playlistId)
 
-  const handleContinue = () => {
+  const handleContinue = useCallback(() => {
+    setCurrentStep((prev) => prev + 1)
+  }, [])
+
+  const handleError = useCallback((error: string) => {
+    setError(error)
+  }, [])
+
+  useEffect(() => {
     if (currentStep === steps.length - 1) {
       props.handleContinue()
-    } else {
-      setCurrentStep((prev) => prev + 1)
     }
-  }
-
-  const handleError = (error: string) => {
-    setError(error)
-  }
+  }, [currentStep, props])
 
   const value = {
     ...props,
@@ -90,24 +92,25 @@ function PlaylistTransfer(props: PlaylistTransferProps) {
           }
           <div className="flex flex-col gap-1">
             {
-              error &&
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  Failed to transfer playlist.
-                  <Button onClick={() => setCurrentStep(0)}>Try Again</Button>
-                  <Button onClick={props.handleContinue}>Skip</Button>
-                </AlertDescription>
-              </Alert>
-            }
-            {
               steps.map((Step, index) => {
                 if (currentStep < index) return null
-                return <Step key={Step.name} handleContinue={handleContinue} handleError={handleError} />
+                return <Step key={`${props.playlistId}-${Step.name}`} handleContinue={handleContinue} handleError={handleError} />
               })
             }
           </div>
+          {
+            error &&
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription className="flex flex-row items-center">
+                Failed to transfer playlist.
+                <div className="flex-1" />
+                <Button onClick={() => setCurrentStep(0)}>Try Again</Button>
+                <Button onClick={props.handleContinue}>Skip</Button>
+              </AlertDescription>
+            </Alert>
+          }
         </CardContent>
       </Card>
     </PlaylistTransferContext.Provider>
@@ -143,9 +146,9 @@ export default function TransferStep(props: IStepProps) {
             </>
           )
           : (
-            <div className="flex flex-row items-center">
+            <div className="flex flex-row items-center justify-center gap-2">
               <Check className="size-10 text-chart-2" />
-              <span className="text-2xl">Playlists Transfered successfully!</span>
+              <span className="text-xl">Playlists Transferred successfully!</span>
             </div>
           )
       }

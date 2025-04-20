@@ -1,6 +1,6 @@
 import SpotifyIcon from "@/assets/icons/spotify.svg";
 import YoutubeIcon from "@/assets/icons/youtube.svg";
-import { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import { UseMutationOptions, UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { atomWithStorage } from "jotai/utils";
 import { atom } from "jotai/vanilla";
 import { SVGElementType } from "react";
@@ -135,10 +135,11 @@ export const useTrackIds = (
 
 export const useCreatePlaylist = (
   serviceId: ServiceId,
+  options: Partial<UseMutationOptions<string, Error, Playlist, unknown>> = {}
 ) => {
   const responses: Record<ServiceId, UseMutationResult<string, Error, Playlist, unknown>> = {
-    spotify: useCreateSpotifyPlaylist(),
-    google: useCreateGooglePlaylist(),
+    spotify: useCreateSpotifyPlaylist(options),
+    google: useCreateGooglePlaylist(options),
   }
 
   return responses[serviceId]
@@ -150,10 +151,11 @@ type AddTracksToPlaylistResult = UseMutationResult<string, Error, AddTracksToPla
 
 export const useAddTracksToPlaylist = (
   serviceId: ServiceId,
+  options: UseMutationOptions<string, Error, AddTracksToPlaylistProps, unknown> = {}
 ) => {
   const responses: Record<ServiceId, AddTracksToPlaylistResult> = {
-    spotify: useAddTracksToGooglePlaylist(),
-    google: useAddTracksToSpotifyPlaylist(),
+    spotify: useAddTracksToSpotifyPlaylist(options),
+    google: useAddTracksToGooglePlaylist(options),
   }
 
   return responses[serviceId]

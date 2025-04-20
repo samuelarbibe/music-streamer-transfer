@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, UseMutationOptions, useQuery } from "@tanstack/react-query"
 import { AddTracksToPlaylistProps, Playlist, Track, useServiceAccessToken } from "."
 import { delay } from "../utils"
 import { useState } from "react"
@@ -58,7 +58,7 @@ export const useSpotifyPlaylists = (enabled: boolean) => {
         trackCount: spotifyPlaylist.tracks.total
       }))
     },
-    enabled: !!accessToken && enabled
+    enabled: !!accessToken && !!enabled
   })
 }
 
@@ -66,7 +66,7 @@ export const useSpotifyPlaylistById = (playlistId?: string) => {
   const accessToken = useServiceAccessToken("spotify")
 
   return useQuery<Playlist>({
-    queryKey: ["spotify", "playlists", playlistId],
+    queryKey: ["spotify", "playlists", "id", playlistId],
     queryFn: async () => {
       const { data } = await axios.get<SpotifyPlaylistResponse>(
         `https://api.spotify.com/v1/playlists/${playlistId}`,
@@ -129,7 +129,7 @@ export const useSpotifyTrackIds = (tracks?: Track[]) => {
   const [progress, setProgress] = useState(0)
 
   const res = useQuery<string[]>({
-    queryKey: ["spotify", "track", tracks],
+    queryKey: ["spotify", "tracks", tracks?.map((track) => track.id)],
     queryFn: async () => {
       if (!tracks) return []
 
@@ -164,7 +164,7 @@ export const useSpotifyTrackIds = (tracks?: Track[]) => {
   }
 }
 
-export const useCreateSpotifyPlaylist = () => {
+export const useCreateSpotifyPlaylist = (options: Partial<UseMutationOptions<string, Error, Playlist, unknown>>) => {
   const accessToken = useServiceAccessToken("spotify")
 
   return useMutation({
@@ -186,11 +186,12 @@ export const useCreateSpotifyPlaylist = () => {
       )
 
       return data.id as string
-    }
+    },
+    ...options
   })
 }
 
-export const useAddTracksToSpotifyPlaylist = () => {
+export const useAddTracksToSpotifyPlaylist = (options: Partial<UseMutationOptions<string, Error, AddTracksToPlaylistProps, unknown>>) => {
   const [progress, setProgress] = useState(0)
   const accessToken = useServiceAccessToken("spotify")
 
@@ -212,7 +213,8 @@ export const useAddTracksToSpotifyPlaylist = () => {
       }
 
       return playlistId
-    }
+    },
+    ...options
   })
 
   return {

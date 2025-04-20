@@ -18,7 +18,9 @@ export default function AddTracksToPlaylistStep({ handleContinue, handleError }:
     isPending,
     progress,
     error: addTracksToPlaylistError
-  } = useAddTracksToPlaylist(targetServiceId)
+  } = useAddTracksToPlaylist(targetServiceId, {
+    onSuccess: handleContinue
+  })
 
   const error = existingTargetTracksError || addTracksToPlaylistError
 
@@ -39,8 +41,6 @@ export default function AddTracksToPlaylistStep({ handleContinue, handleError }:
       addTracksToPlaylist({
         playlistId: targetPlaylistId,
         trackIds: tracksIdsToBeAdded
-      }, {
-        onSuccess: handleContinue
       })
     }
   }, [addTracksToPlaylist, handleContinue, targetPlaylistId, tracksIdsToBeAdded])
