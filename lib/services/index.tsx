@@ -4,10 +4,8 @@ import { UseMutationOptions, UseMutationResult, UseQueryResult } from "@tanstack
 import { atomWithStorage } from "jotai/utils";
 import { atom } from "jotai/vanilla";
 import { SVGElementType } from "react";
-import { useAddTracksToSpotifyPlaylist, useCreateSpotifyPlaylist, useSpotifyPlaylistById, useSpotifyPlaylists, useSpotifyPlaylistTracksById, useSpotifyTrackIds } from "./spotify";
-import { Session } from "next-auth";
-import { useAtom } from "jotai/react";
-import { useAddTracksToGooglePlaylist, useCreateGooglePlaylist, useGooglePlaylistById, useGooglePlaylists, useGooglePlaylistTracksById, useGoogleTrackIds } from "./google";
+import { useAddTracksToSpotifyPlaylist, useCreateSpotifyPlaylist, useIsSpotifyAuthenticated, useSpotifyPlaylistById, useSpotifyPlaylists, useSpotifyPlaylistTracksById, useSpotifySignIn, useSpotifyTrackIds, useSpotifyProfile, useSpotifySignOut } from "./spotify";
+import { useAddTracksToGooglePlaylist, useCreateGooglePlaylist, useGooglePlaylistById, useGooglePlaylists, useGooglePlaylistTracksById, useGoogleProfile, useGoogleSignIn, useGoogleSignOut, useGoogleTrackIds, useIsGoogleAuthenticated } from "./google";
 
 export const sourcePlaylistsIdsAtom = atom<Set<string>>(new Set<string>());
 
@@ -19,13 +17,6 @@ export const targetServiceIdAtom = atomWithStorage<ServiceId | null>(
   "targetServiceId",
   null
 );
-export const serviceSessionsAtom = atomWithStorage<Record<ServiceId, Session | null>>(
-  "serviceSessions",
-  {
-    spotify: null,
-    google: null
-  }
-)
 
 export type ServiceId = "spotify" | "google";
 
@@ -68,28 +59,51 @@ export const services: Record<ServiceId, Service> = {
   },
 };
 
-export const useServiceUser = (serviceId: ServiceId | null) => {
-  const [sessions] = useAtom(serviceSessionsAtom);
+export const isAuthenticatedAtom = atom<Record<ServiceId, boolean>>({ spotify: false, google: false })
 
-  return (serviceId && sessions[serviceId]?.user) ?? null;
+export interface ServiceProfile {
+  name: string
+  imageUrl: string
 }
 
-export const useServiceAccessToken = (serviceId: ServiceId | null) => {
-  const [sessions] = useAtom(serviceSessionsAtom);
+export const useServiceProfile = (serviceId: ServiceId) => {
+  const responses: Record<ServiceId, UseQueryResult<ServiceProfile | null, Error>> = {
+    spotify: useSpotifyProfile(),
+    google: useGoogleProfile(),
+  }
 
-  return (serviceId && sessions[serviceId]?.accessToken) ?? null;
-};
+  return responses[serviceId]
+}
 
-export const useIsAccessTokenExpired = (serviceId: ServiceId | null) => {
-  const [sessions] = useAtom(serviceSessionsAtom);
+export const useIsServiceAuthenticated = (serviceId: ServiceId) => {
+  const responses: Record<ServiceId, UseQueryResult<boolean, Error>> = {
+    spotify: useIsSpotifyAuthenticated(),
+    google: useIsGoogleAuthenticated(),
+  }
 
-  const expiresAt = serviceId && sessions[serviceId]?.expires
+  return responses[serviceId]
+}
 
-  return !!(expiresAt && new Date(expiresAt) < new Date());
-};
+export const useSignIn = (serviceId: ServiceId) => {
+  const responses: Record<ServiceId, () => void> = {
+    spotify: useSpotifySignIn(),
+    google: useGoogleSignIn(),
+  }
+
+  return responses[serviceId]
+}
+
+export const useSignOut = (serviceId: ServiceId) => {
+  const responses: Record<ServiceId, () => void> = {
+    spotify: useSpotifySignOut(),
+    google: useGoogleSignOut(),
+  }
+
+  return responses[serviceId]
+}
 
 export const usePlaylists = (serviceId: ServiceId) => {
-  const responses: Record<ServiceId, UseQueryResult<Playlist[]>> = {
+  const responses: Record<ServiceId, UseQueryResult<Playlist[] | undefined>> = {
     spotify: useSpotifyPlaylists(serviceId === "spotify"),
     google: useGooglePlaylists(serviceId === "google")
   }
@@ -101,7 +115,7 @@ export const usePlaylistById = (
   serviceId: ServiceId,
   playlistId?: string,
 ) => {
-  const responses: Record<ServiceId, UseQueryResult<Playlist>> = {
+  const responses: Record<ServiceId, UseQueryResult<Playlist | undefined>> = {
     spotify: useSpotifyPlaylistById(serviceId === "spotify" ? playlistId : undefined),
     google: useGooglePlaylistById(serviceId === "google" ? playlistId : undefined),
   }
@@ -113,7 +127,7 @@ export const usePlaylistTracksById = (
   serviceId: ServiceId,
   playlistId?: string,
 ) => {
-  const responses: Record<ServiceId, UseQueryResult<Track[]>> = {
+  const responses: Record<ServiceId, UseQueryResult<Track[] | undefined>> = {
     spotify: useSpotifyPlaylistTracksById(serviceId === "spotify" ? playlistId : undefined),
     google: useGooglePlaylistTracksById(serviceId === "google" ? playlistId : undefined),
   }
@@ -125,7 +139,7 @@ export const useTrackIds = (
   serviceId: ServiceId,
   tracks?: Track[],
 ) => {
-  const responses: Record<ServiceId, UseQueryResult<string[]> & { progress: number }> = {
+  const responses: Record<ServiceId, UseQueryResult<string[] | undefined> & { progress: number }> = {
     spotify: useSpotifyTrackIds(serviceId === "spotify" ? tracks : undefined),
     google: useGoogleTrackIds(serviceId === "google" ? tracks : undefined),
   }
@@ -135,9 +149,9 @@ export const useTrackIds = (
 
 export const useCreatePlaylist = (
   serviceId: ServiceId,
-  options: Partial<UseMutationOptions<string, Error, Playlist, unknown>> = {}
+  options: Partial<UseMutationOptions<string | undefined, Error, Playlist, unknown>> = {}
 ) => {
-  const responses: Record<ServiceId, UseMutationResult<string, Error, Playlist, unknown>> = {
+  const responses: Record<ServiceId, UseMutationResult<string | undefined, Error, Playlist, unknown>> = {
     spotify: useCreateSpotifyPlaylist(options),
     google: useCreateGooglePlaylist(options),
   }
@@ -160,4 +174,3 @@ export const useAddTracksToPlaylist = (
 
   return responses[serviceId]
 }
-

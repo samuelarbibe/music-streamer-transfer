@@ -1,9 +1,9 @@
 'use client'
 
 import React, { forwardRef } from "react";
-import { ServiceId, services, useIsAccessTokenExpired, useServiceUser } from "@/lib/services";
+import { ServiceId, services, useIsServiceAuthenticated, useServiceProfile } from "@/lib/services";
 import { Button } from "./button";
-import { Check, ClockAlert, Lock } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "./card";
 
 type ServiceCardProps = {
@@ -13,8 +13,8 @@ type ServiceCardProps = {
 };
 
 const ServiceCard = forwardRef<HTMLDivElement, ServiceCardProps>(({ serviceId, handleLogin, handleLogout }, ref) => {
-  const user = useServiceUser(serviceId);
-  const isAccessTokenExpired = useIsAccessTokenExpired(serviceId)
+  const { data: profile } = useServiceProfile(serviceId);
+  const { data: isAuthenticated } = useIsServiceAuthenticated(serviceId)
 
   return (
     <Card ref={ref} className="flex-1 flex-col bg-card">
@@ -27,30 +27,26 @@ const ServiceCard = forwardRef<HTMLDivElement, ServiceCardProps>(({ serviceId, h
       <CardContent className="flex flex-col space-y-4 flex-1 items-center">
         <div className="rounded-full bg-muted">
           {
-            user
-              ? isAccessTokenExpired
-                ? <ClockAlert className={"size-6 m-3"} />
-                : user.image
-                  ? <img src={user.image} className="size-15 rounded-full" />
-                  : <Check className={"size-6 m-3"} />
+            profile
+              ? profile.imageUrl
+                ? <img src={profile.imageUrl} className="size-15 rounded-full" />
+                : <Check className={"size-6 m-3"} />
               : <Lock className={"size-6 m-3"} />
           }
         </div>
         <p className="text-center text-sm text-muted-foreground">
           {
-            user
-              ? isAccessTokenExpired
-                ? "Token has expired, Please login again."
-                : `Logged in as ${user.name}`
+            isAuthenticated && profile
+              ? `Logged in as ${profile.name}`
               : `Please log in to view your ${services[serviceId].name} details`
           }
         </p>
       </CardContent>
       <CardFooter className="flex justify-center">
         {
-          (!user || isAccessTokenExpired)
-            ? <Button onClick={handleLogin}>Login</Button>
-            : <Button variant='outline' onClick={handleLogout}>Logout</Button>
+          isAuthenticated
+            ? <Button variant='outline' onClick={handleLogout}>Logout</Button>
+            : <Button onClick={handleLogin}>Login</Button>
         }
       </CardFooter>
     </Card>

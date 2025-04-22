@@ -1,20 +1,17 @@
-import { ServiceId, serviceSessionsAtom } from "@/lib/services";
+import { ServiceId, useSignIn, useSignOut } from "@/lib/services";
 import { forwardRef } from "react";
 import ServiceCard from "../ui/service-card";
-import { signIn, signOut } from "next-auth/react";
-import { useSetAtom } from "jotai/react";
-import update from "immutability-helper"
 
 const LoginCard = forwardRef<HTMLDivElement, { serviceId: ServiceId }>(({ serviceId }, ref) => {
-  const setServiceSessions = useSetAtom(serviceSessionsAtom)
+  const signIn = useSignIn(serviceId)
+  const signOut = useSignOut(serviceId)
 
   const handleLogin = () => {
-    signIn(serviceId)
+    signIn()
   }
 
   const handleLogout = () => {
-    setServiceSessions((prev) => update(prev, { $unset: [serviceId] }))
-    signOut({ redirect: false })
+    signOut()
   }
 
   return <ServiceCard ref={ref} serviceId={serviceId} handleLogin={handleLogin} handleLogout={handleLogout} />;

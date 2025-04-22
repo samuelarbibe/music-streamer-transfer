@@ -1,25 +1,11 @@
-import { ServiceId, services, serviceSessionsAtom, sourceServiceIdAtom, targetServiceIdAtom } from "@/lib/services"
-import { useAtom, useSetAtom } from "jotai/react"
-import { useEffect, useRef } from "react"
+import { ServiceId, services, sourceServiceIdAtom, targetServiceIdAtom } from "@/lib/services"
+import { useAtom } from "jotai/react"
+import { useRef } from "react"
 import { AnimatedBeam } from "../magicui/animated-beam"
 import LoginCard from "../services/login-card"
 import ServiceSelect from "../ui/service-select"
 import { Button } from "../ui/button"
-import { useSession } from "next-auth/react"
-
-const useSyncSessionStateToLocalStorage = () => {
-  const { data } = useSession()
-  const setSessionsAtom = useSetAtom(serviceSessionsAtom)
-
-  useEffect(() => {
-    if (!data) return
-
-    setSessionsAtom((prev) => ({
-      ...prev,
-      [data.provider]: data
-    }))
-  }, [data, setSessionsAtom])
-}
+import ContinueButton from "../services/continue-button"
 
 interface LoginStepProps {
   handleContinue: () => void
@@ -32,8 +18,6 @@ export default function LoginStep(props: LoginStepProps) {
 
   const [sourceServiceId, setSourceServiceId] = useAtom(sourceServiceIdAtom)
   const [targetServiceId, setTargetServiceId] = useAtom(targetServiceIdAtom)
-
-  useSyncSessionStateToLocalStorage()
 
   const handleClear = () => {
     setSourceServiceId(null)
@@ -91,13 +75,10 @@ export default function LoginStep(props: LoginStepProps) {
         >
           Clear
         </Button>
-        <Button
-          size="lg"
-          onClick={props.handleContinue}
-        // disabled={!isSourceServiceLoggedIn || !isTargetServiceLoggedIn}
-        >
-          Continue
-        </Button>
+        {
+          sourceServiceId && targetServiceId &&
+          <ContinueButton sourceServiceId={sourceServiceId} targetServiceId={targetServiceId} handleContinue={props.handleContinue} />
+        }
       </div>
     </>
   )

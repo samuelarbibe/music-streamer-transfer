@@ -1,8 +1,13 @@
 import { useMutation, UseMutationOptions, useQuery } from "@tanstack/react-query"
-import { AddTracksToPlaylistProps, Playlist, Track, useServiceAccessToken } from "."
+import { AddTracksToPlaylistProps, Playlist, ServiceProfile, Track } from "."
 import { delay } from "../utils"
 import { useState } from "react";
 import axios from 'axios'
+
+import { useGoogleLogin, googleLogout } from '@react-oauth/google';
+import { useAtomValue, useSetAtom } from "jotai/react";
+import { atomWithStorage } from "jotai/utils";
+
 
 type GooglePlaylist = {
   id: string
@@ -26,8 +31,77 @@ interface GooglePlaylistsResponse {
   items: GooglePlaylist[]
 }
 
+const googleAccessTokenAtom = atomWithStorage<string | undefined>("googleAccessToken", undefined)
+
+export const useGoogleSignIn = () => {
+  const setAccessToken = useSetAtom(googleAccessTokenAtom)
+
+  const signIn = useGoogleLogin({
+    onSuccess: (token) => {
+      setAccessToken(token.access_token)
+    },
+    onError: () => {
+      setAccessToken(undefined)
+    },
+    scope: "openid email profile https://www.googleapis.com/auth/youtube.force-ssl"
+  });
+
+  return signIn
+}
+
+export const useGoogleSignOut = () => {
+  const setAccessToken = useSetAtom(googleAccessTokenAtom)
+
+
+  return () => {
+    googleLogout()
+    setAccessToken(undefined)
+  }
+}
+
+const GOOGLE_HEALTHCHECK_MS = 5000
+
+export const useIsGoogleAuthenticated = () => {
+  const accessToken = useAtomValue(googleAccessTokenAtom)
+
+  return useQuery({
+    queryKey: ["google", "authenticated", accessToken],
+    queryFn: async () => {
+      if (!accessToken) return false
+
+      const res = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`);
+      return res.ok;
+    },
+    refetchInterval: GOOGLE_HEALTHCHECK_MS,
+  })
+}
+
+
+export const useGoogleProfile = () => {
+  const accessToken = useAtomValue(googleAccessTokenAtom)
+
+  return useQuery<ServiceProfile | null>({
+    queryKey: ["google", "profile", accessToken],
+    queryFn: async () => {
+      if (!accessToken) return null
+
+      const { data } = await axios.get(
+        'https://www.googleapis.com/oauth2/v3/userinfo',
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      if (!data) return null
+
+      return {
+        name: data.name as string,
+        imageUrl: data.picture as string
+      }
+    },
+  })
+}
+
 export const useGooglePlaylistById = (playlistId?: string) => {
-  const accessToken = useServiceAccessToken("google")
+  const accessToken = useAtomValue(googleAccessTokenAtom)
 
   return useQuery<Playlist>({
     queryKey: ["google", "playlists", "id", playlistId],
@@ -53,7 +127,7 @@ export const useGooglePlaylistById = (playlistId?: string) => {
 
 export const useGoogleTrackIds = (tracks?: Track[]) => {
   const requestDelay = 100
-  const accessToken = useServiceAccessToken("google")
+  const accessToken = useAtomValue(googleAccessTokenAtom)
   const [progress, setProgress] = useState(0)
 
   const res = useQuery<string[]>({
@@ -64,7 +138,7 @@ export const useGoogleTrackIds = (tracks?: Track[]) => {
       const result: string[] = []
 
       // TODO: remove slice
-      for (const track of tracks.slice(0, 1)) {
+      for (const track of tracks) {
         const { data } = await axios.get(
           `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&q=${encodeURIComponent(`${track.name} ${track.artists[0]}`)}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -92,7 +166,7 @@ export const useGoogleTrackIds = (tracks?: Track[]) => {
 }
 
 export const useGooglePlaylists = (enabled: boolean) => {
-  const accessToken = useServiceAccessToken("google")
+  const accessToken = useAtomValue(googleAccessTokenAtom)
 
   return useQuery<Playlist[]>({
     queryKey: ["google", "playlists"],
@@ -114,8 +188,8 @@ export const useGooglePlaylists = (enabled: boolean) => {
   })
 }
 
-export const useCreateGooglePlaylist = (options: Partial<UseMutationOptions<string, Error, Playlist, unknown>>) => {
-  const accessToken = useServiceAccessToken("google")
+export const useCreateGooglePlaylist = (options: Partial<UseMutationOptions<string | undefined, Error, Playlist, unknown>>) => {
+  const accessToken = useAtomValue(googleAccessTokenAtom)
 
   return useMutation({
     mutationFn: async (playlist: Playlist) => {
@@ -140,7 +214,7 @@ export const useCreateGooglePlaylist = (options: Partial<UseMutationOptions<stri
 
 export const useAddTracksToGooglePlaylist = (options: Partial<UseMutationOptions<string, Error, AddTracksToPlaylistProps, unknown>>) => {
   const [progress, setProgress] = useState(0)
-  const accessToken = useServiceAccessToken("google")
+  const accessToken = useAtomValue(googleAccessTokenAtom)
 
   const res = useMutation({
     mutationFn: async ({ trackIds, playlistId }: AddTracksToPlaylistProps) => {
@@ -189,7 +263,7 @@ interface GooglePlaylistListResponse {
 export const useGooglePlaylistTracksById = (playlistId?: string) => {
   const limit = 50
   const limitDelay = 200
-  const accessToken = useServiceAccessToken("google")
+  const accessToken = useAtomValue(googleAccessTokenAtom)
 
   return useQuery<Track[]>({
     queryKey: ["google", "playlists", "tracks", playlistId],
