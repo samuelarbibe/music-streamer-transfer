@@ -1,13 +1,11 @@
 import { useMutation, UseMutationOptions, useQuery } from "@tanstack/react-query"
 import { AddTracksToPlaylistProps, Playlist, ServiceProfile, Track } from "."
-import { delay } from "../utils"
+import { delay, generateOAuthState } from "../utils"
 import { useState } from "react";
 import axios from 'axios'
 
-import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import { useAtomValue, useSetAtom } from "jotai/react";
 import { atomWithStorage } from "jotai/utils";
-
 
 type GooglePlaylist = {
   id: string
@@ -31,30 +29,30 @@ interface GooglePlaylistsResponse {
   items: GooglePlaylist[]
 }
 
-const googleAccessTokenAtom = atomWithStorage<string | undefined>("googleAccessToken", undefined)
+export const googleAccessTokenAtom = atomWithStorage<string | undefined>("google:accessToken", undefined)
+export const googleOauthStateAtom = atomWithStorage<string | undefined>("google:state", undefined)
 
 export const useGoogleSignIn = () => {
-  const setAccessToken = useSetAtom(googleAccessTokenAtom)
+  const setOauthState = useSetAtom(googleOauthStateAtom)
 
-  const signIn = useGoogleLogin({
-    onSuccess: (token) => {
-      setAccessToken(token.access_token)
-    },
-    onError: () => {
-      setAccessToken(undefined)
-    },
-    scope: "openid email profile https://www.googleapis.com/auth/youtube.force-ssl"
-  });
+  return async () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string;
+    const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_CALLBACK_URL as string;
+    const scope = "openid email profile https://www.googleapis.com/auth/youtube.force-ssl";
 
-  return signIn
+    const state = generateOAuthState();
+    setOauthState(state)
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}`;
+
+    window.location.href = authUrl;
+  }
 }
 
 export const useGoogleSignOut = () => {
   const setAccessToken = useSetAtom(googleAccessTokenAtom)
 
-
   return () => {
-    googleLogout()
     setAccessToken(undefined)
   }
 }

@@ -1,21 +1,30 @@
-import { useCallback, useEffect, useState } from "react"
-import { AuthorizationCodeWithPKCEStrategy, Page, PlaylistedTrack, SearchResults, SpotifyApi, Track as SpotifyTrack } from '@spotify/web-api-ts-sdk';
-import { useMutation, UseMutationOptions, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
+import { AccessToken, AuthorizationCodeWithPKCEStrategy, Page, PlaylistedTrack, SearchResults, SpotifyApi, Track as SpotifyTrack } from '@spotify/web-api-ts-sdk';
+import { useMutation, UseMutationOptions, useQuery } from "@tanstack/react-query"
 
 import { delay } from "../utils"
 import { AddTracksToPlaylistProps, Playlist, ServiceProfile, Track } from "."
 import { atom } from 'jotai/vanilla';
-import { useAtom, useSetAtom } from 'jotai/react';
-import { useSearchParams } from 'next/navigation';
+import { useAtomValue, useSetAtom } from 'jotai/react';
+import { atomWithStorage } from "jotai/utils";
 
-const spotifyAtom = atom<SpotifyApi>()
+export const spotifyAccessTokenAtom = atomWithStorage<AccessToken | undefined>("spotify:accessToken", undefined)
+
+export const spotifyAtom = atom((get) => {
+  const accessToken = get(spotifyAccessTokenAtom)
+  const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID as string
+
+  if (!accessToken) return
+
+  return SpotifyApi.withAccessToken(clientId, accessToken)
+})
 
 export const useSpotifyProfile = () => {
-  const [spotify] = useAtom(spotifyAtom)
-  const { data: isAuthenticated } = useIsSpotifyAuthenticated()
+  const spotify = useAtomValue(spotifyAtom)
+  const spotifyAccessToken = useAtomValue(spotifyAccessTokenAtom)
 
   return useQuery<ServiceProfile | null>({
-    queryKey: ["spotify", "profile", isAuthenticated],
+    queryKey: ["spotify", "profile", spotifyAccessToken],
     queryFn: async () => {
       if (!spotify) return null
 
@@ -32,10 +41,11 @@ export const useSpotifyProfile = () => {
 const SPOTIFY_HEALTHCHECK_MS = 5000
 
 export const useIsSpotifyAuthenticated = () => {
-  const [spotify] = useAtom(spotifyAtom)
+  const spotify = useAtomValue(spotifyAtom)
+  const spotifyAccessToken = useAtomValue(spotifyAccessTokenAtom)
 
   return useQuery({
-    queryKey: ["spotify", "authenticated"],
+    queryKey: ["spotify", "authenticated", spotifyAccessToken],
     queryFn: async () => {
       const accessToken = await spotify?.getAccessToken()
       return !!accessToken
@@ -44,62 +54,36 @@ export const useIsSpotifyAuthenticated = () => {
   })
 }
 
+const getSpotifyAuthApi = () => {
+  const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID as string
+  const redirectUrl = process.env.NEXT_PUBLIC_SPOTIFY_CALLBACK_URL as string
+  const activeScopes = ["user-read-email", "playlist-read-private", "playlist-modify-public", "playlist-modify-private", "user-library-read user-library-modify"]
+
+  const auth = new AuthorizationCodeWithPKCEStrategy(clientId, redirectUrl, activeScopes);
+  const internalSdk = new SpotifyApi(auth);
+
+  return internalSdk
+}
+
 export const useSpotifySignIn = () => {
-  const searchParams = useSearchParams()
-  const shouldAuthorizeCode = !!searchParams.get("code")
-  const setSpotify = useSetAtom(spotifyAtom)
-  const queryClient = useQueryClient()
-
-  const performAuthentication = useCallback(async () => {
-    const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID as string
-    const redirectUrl = process.env.NEXT_PUBLIC_SPOTIFY_CALLBACK_URL as string
-    const activeScopes = ["user-read-email", "playlist-read-private", "playlist-modify-public", "playlist-modify-private", "user-library-read user-library-modify"]
-
-    const auth = new AuthorizationCodeWithPKCEStrategy(clientId, redirectUrl, activeScopes);
-    const internalSdk = new SpotifyApi(auth);
-
-    try {
-      const { authenticated, accessToken } = await internalSdk.authenticate();
-
-      if (authenticated) {
-        setSpotify(() => SpotifyApi.withAccessToken(clientId, accessToken));
-        queryClient.setQueryData(["spotify", "authenticated"], () => true)
-      }
-    } catch (e: Error | unknown) {
-      const error = e as Error;
-
-      if (error && error.message && error.message.includes("No verifier found in cache")) {
-        console.error("If you are seeing this error in a React Development Environment it's because React calls useEffect twice. Using the Spotify SDK performs a token exchange that is only valid once, so React re-rendering this component will result in a second, failed authentication. This will not impact your production applications (or anything running outside of Strict Mode - which is designed for debugging components).", error);
-      } else {
-        console.error(e);
-      }
-    }
-  }, [queryClient, setSpotify])
-
-  useEffect(() => {
-    if (!shouldAuthorizeCode) return
-
-    performAuthentication()
-  }, [performAuthentication, shouldAuthorizeCode])
-
-  return () => {
-    performAuthentication()
+  return async () => {
+    const spotifyAuthApi = getSpotifyAuthApi()
+    await spotifyAuthApi.authenticate()
   }
 }
 
 export const useSpotifySignOut = () => {
-  const [spotify, setSpotify] = useAtom(spotifyAtom)
-  const queryClient = useQueryClient()
+  const setSpotifyAccessToken = useSetAtom(spotifyAccessTokenAtom)
 
   return () => {
-    spotify?.logOut()
-    setSpotify(undefined)
-    queryClient.setQueryData(["spotify", "authenticated"], () => false)
+    const spotifyAuthApi = getSpotifyAuthApi()
+    spotifyAuthApi.logOut()
+    setSpotifyAccessToken(undefined)
   }
 }
 
 export const useSpotifyPlaylists = (enabled: boolean) => {
-  const [spotify] = useAtom(spotifyAtom)
+  const spotify = useAtomValue(spotifyAtom)
 
   return useQuery<Playlist[] | undefined>({
     queryKey: ["spotify", "playlists"],
@@ -119,7 +103,7 @@ export const useSpotifyPlaylists = (enabled: boolean) => {
 }
 
 export const useSpotifyPlaylistById = (playlistId?: string) => {
-  const [spotify] = useAtom(spotifyAtom)
+  const spotify = useAtomValue(spotifyAtom)
 
   return useQuery<Playlist | undefined>({
     queryKey: ["spotify", "playlists", "id", playlistId],
@@ -144,7 +128,7 @@ export const useSpotifyPlaylistById = (playlistId?: string) => {
 export const useSpotifyPlaylistTracksById = (playlistId?: string) => {
   const limit = 50
   const limitDelay = 200
-  const [spotify] = useAtom(spotifyAtom)
+  const spotify = useAtomValue(spotifyAtom)
 
   return useQuery<Track[] | undefined>({
     queryKey: ["spotify", "playlists", "tracks", playlistId],
@@ -185,7 +169,7 @@ export const useSpotifyPlaylistTracksById = (playlistId?: string) => {
 
 export const useSpotifyTrackIds = (tracks?: Track[]) => {
   const requestDelay = 100
-  const [spotify] = useAtom(spotifyAtom)
+  const spotify = useAtomValue(spotifyAtom)
   const [progress, setProgress] = useState(0)
 
   const res = useQuery<string[] | undefined>({
@@ -224,7 +208,7 @@ export const useSpotifyTrackIds = (tracks?: Track[]) => {
 }
 
 export const useCreateSpotifyPlaylist = (options: Partial<UseMutationOptions<string | undefined, Error, Playlist, unknown>>) => {
-  const [spotify] = useAtom(spotifyAtom)
+  const spotify = useAtomValue(spotifyAtom)
 
   return useMutation({
     mutationFn: async (playlist: Playlist) => {
@@ -245,7 +229,7 @@ export const useCreateSpotifyPlaylist = (options: Partial<UseMutationOptions<str
 
 export const useAddTracksToSpotifyPlaylist = (options: Partial<UseMutationOptions<string, Error, AddTracksToPlaylistProps, unknown>>) => {
   const [progress, setProgress] = useState(0)
-  const [spotify] = useAtom(spotifyAtom)
+  const spotify = useAtomValue(spotifyAtom)
 
   const res = useMutation({
     mutationFn: async ({ trackIds, playlistId }: AddTracksToPlaylistProps) => {
