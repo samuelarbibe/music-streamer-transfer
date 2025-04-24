@@ -2,6 +2,7 @@ import { services, useTrackIds } from "@/lib/services"
 import { PlaylistTransferContext, TransferStepProps } from "../transfer-step"
 import { LoaderCircle, Check } from "lucide-react"
 import { useContext, useEffect, useRef } from "react"
+import { Progress } from "@/components/ui/progress"
 
 export default function LoadTargetTracksStep({ handleContinue, handleError }: TransferStepProps) {
   const sent = useRef(false)
@@ -42,7 +43,8 @@ export default function LoadTargetTracksStep({ handleContinue, handleError }: Tr
       return (
         <>
           <LoaderCircle className="size-5 animate-spin" />
-          <span className="text-sm animate-pulse">{`Loading Tracks... (${progress}/${sourceTracks?.length})`}</span>
+          <span className="text-sm animate-pulse whitespace-nowrap">{`Loading Tracks... (${progress}/${sourceTracks?.length})`}</span>
+          <Progress value={progress / (sourceTracks?.length ?? 0) * 100} />
         </>
       )
     }

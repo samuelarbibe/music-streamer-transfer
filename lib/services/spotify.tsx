@@ -5,7 +5,7 @@ import { useMutation, UseMutationOptions, useQuery } from "@tanstack/react-query
 import { delay } from "../utils"
 import { AddTracksToPlaylistProps, Playlist, ServiceProfile, Track } from "."
 import { atom } from 'jotai/vanilla';
-import { useAtomValue, useSetAtom } from 'jotai/react';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai/react';
 import { atomWithStorage } from "jotai/utils";
 
 export const spotifyAccessTokenAtom = atomWithStorage<AccessToken | undefined>("spotify:accessToken", undefined)
@@ -21,10 +21,10 @@ export const spotifyAtom = atom((get) => {
 
 export const useSpotifyProfile = () => {
   const spotify = useAtomValue(spotifyAtom)
-  const spotifyAccessToken = useAtomValue(spotifyAccessTokenAtom)
+  const { data: isAuthenticated } = useIsSpotifyAuthenticated()
 
   return useQuery<ServiceProfile | null>({
-    queryKey: ["spotify", "profile", spotifyAccessToken],
+    queryKey: ["spotify", "profile", isAuthenticated],
     queryFn: async () => {
       if (!spotify) return null
 
@@ -42,13 +42,22 @@ const SPOTIFY_HEALTHCHECK_MS = 5000
 
 export const useIsSpotifyAuthenticated = () => {
   const spotify = useAtomValue(spotifyAtom)
-  const spotifyAccessToken = useAtomValue(spotifyAccessTokenAtom)
+  const signOut = useSpotifySignOut()
+  const [spotifyAccessToken] = useAtom(spotifyAccessTokenAtom)
 
   return useQuery({
-    queryKey: ["spotify", "authenticated", spotifyAccessToken],
+    queryKey: ["spotify", "authenticated", !!spotifyAccessToken],
     queryFn: async () => {
-      const accessToken = await spotify?.getAccessToken()
-      return !!accessToken
+      if (!spotify) return false
+
+      const accessToken = await spotify.currentUser.profile().catch(() => null)
+
+      if (!accessToken) {
+        signOut()
+        return false
+      }
+
+      return true
     },
     refetchInterval: SPOTIFY_HEALTHCHECK_MS,
   })
@@ -181,7 +190,7 @@ export const useSpotifyTrackIds = (tracks?: Track[]) => {
 
       // TODO: remove slice
       for (const track of tracks) {
-        const query = `${track.name} ${track.artists[0]}`
+        const query = `track:${track.name} artist:${track.artists[0]}`
 
         const url = `search?q=${encodeURIComponent(query)}&type=track&limit=1`
         const data = await spotify?.makeRequest<SearchResults<["track"]>>("GET", url)
@@ -208,6 +217,7 @@ export const useSpotifyTrackIds = (tracks?: Track[]) => {
 }
 
 export const useCreateSpotifyPlaylist = (options: Partial<UseMutationOptions<string | undefined, Error, Playlist, unknown>>) => {
+  const createDelay = 5000
   const spotify = useAtomValue(spotifyAtom)
 
   return useMutation({
@@ -220,6 +230,8 @@ export const useCreateSpotifyPlaylist = (options: Partial<UseMutationOptions<str
         description: "Created by music-streamer-transfer",
         public: false
       })
+
+      await delay(createDelay)
 
       return data?.id
     },

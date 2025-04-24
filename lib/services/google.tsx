@@ -4,7 +4,7 @@ import { delay, generateOAuthState } from "../utils"
 import { useState } from "react";
 import axios from 'axios'
 
-import { useAtomValue, useSetAtom } from "jotai/react";
+import { useAtom, useAtomValue, useSetAtom } from "jotai/react";
 import { atomWithStorage } from "jotai/utils";
 
 type GooglePlaylist = {
@@ -60,20 +60,25 @@ export const useGoogleSignOut = () => {
 const GOOGLE_HEALTHCHECK_MS = 5000
 
 export const useIsGoogleAuthenticated = () => {
-  const accessToken = useAtomValue(googleAccessTokenAtom)
+  const [accessToken, setAccessToken] = useAtom(googleAccessTokenAtom)
 
   return useQuery({
     queryKey: ["google", "authenticated", accessToken],
     queryFn: async () => {
       if (!accessToken) return false
 
-      const res = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`);
-      return res.ok;
+      return await axios.get(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`)
+        .then(() => {
+          return true
+        })
+        .catch(() => {
+          setAccessToken(undefined)
+          return false
+        })
     },
     refetchInterval: GOOGLE_HEALTHCHECK_MS,
   })
 }
-
 
 export const useGoogleProfile = () => {
   const accessToken = useAtomValue(googleAccessTokenAtom)
@@ -283,7 +288,7 @@ export const useGooglePlaylistTracksById = (playlistId?: string) => {
         const tracks = data.items.map<Track>((item) => ({
           id: item.snippet.resourceId.videoId,
           name: item.snippet.title,
-          artists: [item.snippet.title]
+          artists: []
         }))
         result.push(...tracks)
 

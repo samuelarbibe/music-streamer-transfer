@@ -30,7 +30,10 @@ export default function Playlists(props: PlaylistsProps) {
             <img src={playlist.image} className="h-12 w-12 object-cover" />
             <div className="flex flex-col items-start">
               <span className="text-lg">{playlist.name}</span>
-              <span className="text-sm text-muted-foreground">{`${playlist.trackCount} tracks`}</span>
+              {
+                playlist.trackCount &&
+                <span className="text-sm text-muted-foreground">{`${playlist.trackCount} tracks`}</span>
+              }
             </div>
           </div>
         ))

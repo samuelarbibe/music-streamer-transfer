@@ -1,11 +1,13 @@
 import SpotifyIcon from "@/assets/icons/spotify.svg";
 import YoutubeIcon from "@/assets/icons/youtube.svg";
+import AppleIcon from "@/assets/icons/apple.svg";
 import { UseMutationOptions, UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { atomWithStorage } from "jotai/utils";
 import { atom } from "jotai/vanilla";
 import { SVGElementType } from "react";
 import { useAddTracksToSpotifyPlaylist, useCreateSpotifyPlaylist, useIsSpotifyAuthenticated, useSpotifyPlaylistById, useSpotifyPlaylists, useSpotifyPlaylistTracksById, useSpotifySignIn, useSpotifyTrackIds, useSpotifyProfile, useSpotifySignOut } from "./spotify";
 import { useAddTracksToGooglePlaylist, useCreateGooglePlaylist, useGooglePlaylistById, useGooglePlaylists, useGooglePlaylistTracksById, useGoogleProfile, useGoogleSignIn, useGoogleSignOut, useGoogleTrackIds, useIsGoogleAuthenticated } from "./google";
+import { useAddTracksToApplePlaylist, useApplePlaylistById, useApplePlaylists, useApplePlaylistTracksById, useAppleProfile, useAppleSignIn, useAppleSignOut, useAppleTrackIds, useCreateApplePlaylist, useIsAppleAuthenticated } from "./apple";
 
 export const sourcePlaylistsIdsAtom = atom<Set<string>>(new Set<string>());
 
@@ -18,7 +20,7 @@ export const targetServiceIdAtom = atomWithStorage<ServiceId | null>(
   null
 );
 
-export type ServiceId = "spotify" | "google";
+export type ServiceId = "spotify" | "google" | "apple";
 
 export type Track = {
   id: string
@@ -29,9 +31,9 @@ export type Track = {
 export type Playlist = {
   id: string
   name: string,
-  description: string,
+  description?: string,
   image: string,
-  trackCount: number
+  trackCount?: number
 }
 
 export type Service = {
@@ -57,9 +59,14 @@ export const services: Record<ServiceId, Service> = {
     borderColor: "youtube",
     icon: YoutubeIcon,
   },
+  apple: {
+    name: "Apple Music",
+    bgColor: "apple",
+    textColor: "apple",
+    borderColor: "apple",
+    icon: AppleIcon,
+  },
 };
-
-export const isAuthenticatedAtom = atom<Record<ServiceId, boolean>>({ spotify: false, google: false })
 
 export interface ServiceProfile {
   name: string
@@ -70,6 +77,7 @@ export const useServiceProfile = (serviceId: ServiceId) => {
   const responses: Record<ServiceId, UseQueryResult<ServiceProfile | null, Error>> = {
     spotify: useSpotifyProfile(),
     google: useGoogleProfile(),
+    apple: useAppleProfile(),
   }
 
   return responses[serviceId]
@@ -79,6 +87,7 @@ export const useIsServiceAuthenticated = (serviceId: ServiceId) => {
   const responses: Record<ServiceId, UseQueryResult<boolean, Error>> = {
     spotify: useIsSpotifyAuthenticated(),
     google: useIsGoogleAuthenticated(),
+    apple: useIsAppleAuthenticated(),
   }
 
   return responses[serviceId]
@@ -88,6 +97,7 @@ export const useSignIn = (serviceId: ServiceId) => {
   const responses: Record<ServiceId, () => void> = {
     spotify: useSpotifySignIn(),
     google: useGoogleSignIn(),
+    apple: useAppleSignIn(),
   }
 
   return responses[serviceId]
@@ -97,6 +107,7 @@ export const useSignOut = (serviceId: ServiceId) => {
   const responses: Record<ServiceId, () => void> = {
     spotify: useSpotifySignOut(),
     google: useGoogleSignOut(),
+    apple: useAppleSignOut()
   }
 
   return responses[serviceId]
@@ -105,7 +116,8 @@ export const useSignOut = (serviceId: ServiceId) => {
 export const usePlaylists = (serviceId: ServiceId) => {
   const responses: Record<ServiceId, UseQueryResult<Playlist[] | undefined>> = {
     spotify: useSpotifyPlaylists(serviceId === "spotify"),
-    google: useGooglePlaylists(serviceId === "google")
+    google: useGooglePlaylists(serviceId === "google"),
+    apple: useApplePlaylists(serviceId === "apple")
   }
 
   return responses[serviceId]
@@ -118,6 +130,7 @@ export const usePlaylistById = (
   const responses: Record<ServiceId, UseQueryResult<Playlist | undefined>> = {
     spotify: useSpotifyPlaylistById(serviceId === "spotify" ? playlistId : undefined),
     google: useGooglePlaylistById(serviceId === "google" ? playlistId : undefined),
+    apple: useApplePlaylistById(serviceId === "apple" ? playlistId : undefined),
   }
 
   return responses[serviceId]
@@ -130,6 +143,7 @@ export const usePlaylistTracksById = (
   const responses: Record<ServiceId, UseQueryResult<Track[] | undefined>> = {
     spotify: useSpotifyPlaylistTracksById(serviceId === "spotify" ? playlistId : undefined),
     google: useGooglePlaylistTracksById(serviceId === "google" ? playlistId : undefined),
+    apple: useApplePlaylistTracksById(serviceId === "apple" ? playlistId : undefined),
   }
 
   return responses[serviceId]
@@ -142,6 +156,7 @@ export const useTrackIds = (
   const responses: Record<ServiceId, UseQueryResult<string[] | undefined> & { progress: number }> = {
     spotify: useSpotifyTrackIds(serviceId === "spotify" ? tracks : undefined),
     google: useGoogleTrackIds(serviceId === "google" ? tracks : undefined),
+    apple: useAppleTrackIds(serviceId === "apple" ? tracks : undefined),
   }
 
   return responses[serviceId]
@@ -154,6 +169,7 @@ export const useCreatePlaylist = (
   const responses: Record<ServiceId, UseMutationResult<string | undefined, Error, Playlist, unknown>> = {
     spotify: useCreateSpotifyPlaylist(options),
     google: useCreateGooglePlaylist(options),
+    apple: useCreateApplePlaylist(options),
   }
 
   return responses[serviceId]
@@ -170,6 +186,7 @@ export const useAddTracksToPlaylist = (
   const responses: Record<ServiceId, AddTracksToPlaylistResult> = {
     spotify: useAddTracksToSpotifyPlaylist(options),
     google: useAddTracksToGooglePlaylist(options),
+    apple: useAddTracksToApplePlaylist(options),
   }
 
   return responses[serviceId]

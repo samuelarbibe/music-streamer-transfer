@@ -61,7 +61,7 @@ function PlaylistTransfer(props: PlaylistTransferProps) {
   }, [])
 
   useEffect(() => {
-    if (currentStep === steps.length - 1) {
+    if (currentStep === steps.length) {
       props.handleContinue()
     }
   }, [currentStep, props])
@@ -86,7 +86,10 @@ function PlaylistTransfer(props: PlaylistTransferProps) {
               <img src={sourcePlaylist.image} className="h-12 w-12 object-cover" />
               <div className="flex flex-col items-start">
                 <span className="text-lg">{sourcePlaylist.name}</span>
-                <span className="text-sm text-muted-foreground">{`${sourcePlaylist.trackCount} tracks`}</span>
+                {
+                  sourcePlaylist.trackCount &&
+                  <span className="text-sm text-muted-foreground">{`${sourcePlaylist.trackCount} tracks`}</span>
+                }
               </div>
             </div>
           }
@@ -106,7 +109,6 @@ function PlaylistTransfer(props: PlaylistTransferProps) {
               <AlertDescription className="flex flex-row items-center">
                 Failed to transfer playlist.
                 <div className="flex-1" />
-                <Button onClick={() => setCurrentStep(0)}>Try Again</Button>
                 <Button onClick={props.handleContinue}>Skip</Button>
               </AlertDescription>
             </Alert>
