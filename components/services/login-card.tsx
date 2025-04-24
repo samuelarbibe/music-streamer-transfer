@@ -1,8 +1,7 @@
 import { ServiceId, useSignIn, useSignOut } from "@/lib/services";
-import { forwardRef } from "react";
 import ServiceCard from "../ui/service-card";
 
-const LoginCard = forwardRef<HTMLDivElement, { serviceId: ServiceId }>(({ serviceId }, ref) => {
+export default function LoginCard({ serviceId }: { serviceId: ServiceId }) {
   const signIn = useSignIn(serviceId)
   const signOut = useSignOut(serviceId)
 
@@ -14,9 +13,5 @@ const LoginCard = forwardRef<HTMLDivElement, { serviceId: ServiceId }>(({ servic
     signOut()
   }
 
-  return <ServiceCard ref={ref} serviceId={serviceId} handleLogin={handleLogin} handleLogout={handleLogout} />;
-});
-
-LoginCard.displayName = "LoginCard"
-
-export default LoginCard;
+  return <ServiceCard serviceId={serviceId} handleLogin={handleLogin} handleLogout={handleLogout} />;
+}

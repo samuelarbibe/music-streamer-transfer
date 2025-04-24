@@ -1,6 +1,6 @@
 'use client'
 
-import React, { forwardRef } from "react";
+import React from "react";
 import { ServiceId, services, useIsServiceAuthenticated, useServiceProfile } from "@/lib/services";
 import { Button } from "./button";
 import { Check, Lock } from "lucide-react";
@@ -12,12 +12,12 @@ type ServiceCardProps = {
   handleLogout: () => void;
 };
 
-const ServiceCard = forwardRef<HTMLDivElement, ServiceCardProps>(({ serviceId, handleLogin, handleLogout }, ref) => {
+export default function ServiceCard({ serviceId, handleLogin, handleLogout }: ServiceCardProps) {
   const { data: profile } = useServiceProfile(serviceId);
   const { data: isAuthenticated } = useIsServiceAuthenticated(serviceId)
 
   return (
-    <Card ref={ref} className="flex-1 flex-col bg-card">
+    <Card className="flex-1 flex-col bg-card">
       <CardHeader>
         <CardTitle className="flex items-center">
           {React.createElement(services[serviceId].icon, { className: "mr-2 h-5 w-5" })}
@@ -51,8 +51,4 @@ const ServiceCard = forwardRef<HTMLDivElement, ServiceCardProps>(({ serviceId, h
       </CardFooter>
     </Card>
   );
-});
-
-ServiceCard.displayName = "ServiceCard";
-
-export default ServiceCard;
+}

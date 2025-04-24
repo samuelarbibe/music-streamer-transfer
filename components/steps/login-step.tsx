@@ -1,7 +1,5 @@
 import { ServiceId, services, sourceServiceIdAtom, targetServiceIdAtom } from "@/lib/services"
 import { useAtom } from "jotai/react"
-import { useRef } from "react"
-import { AnimatedBeam } from "../magicui/animated-beam"
 import LoginCard from "../services/login-card"
 import ServiceSelect from "../ui/service-select"
 import { Button } from "../ui/button"
@@ -12,10 +10,6 @@ interface LoginStepProps {
 }
 
 export default function LoginStep(props: LoginStepProps) {
-  const sourceRef = useRef<HTMLDivElement | null>(null)
-  const targetRef = useRef<HTMLDivElement | null>(null)
-  const containerRef = useRef<HTMLDivElement | null>(null)
-
   const [sourceServiceId, setSourceServiceId] = useAtom(sourceServiceIdAtom)
   const [targetServiceId, setTargetServiceId] = useAtom(targetServiceIdAtom)
 
@@ -26,20 +20,7 @@ export default function LoginStep(props: LoginStepProps) {
 
   return (
     <>
-      <div ref={containerRef} className="w-full flex flex-col md:flex-row relative gap-12">
-        {
-          sourceServiceId && targetServiceId && (
-            <AnimatedBeam
-              className="-z-999"
-              delay={0}
-              pathWidth={4}
-              toRef={targetRef}
-              fromRef={sourceRef}
-              containerRef={containerRef}
-            />
-          )
-        }
-
+      <div className="w-full flex flex-col md:flex-row relative gap-12">
         <div className="flex flex-col flex-1 space-y-5">
           <h2 className="text-lg font-medium">Source</h2>
           <ServiceSelect
@@ -49,7 +30,7 @@ export default function LoginStep(props: LoginStepProps) {
           />
 
           {sourceServiceId &&
-            <LoginCard ref={sourceRef} serviceId={sourceServiceId} />
+            <LoginCard serviceId={sourceServiceId} />
           }
         </div>
 
@@ -62,7 +43,7 @@ export default function LoginStep(props: LoginStepProps) {
           />
           {
             targetServiceId &&
-            <LoginCard ref={targetRef} serviceId={targetServiceId} />
+            <LoginCard serviceId={targetServiceId} />
           }
         </div>
       </div>

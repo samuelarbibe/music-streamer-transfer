@@ -4,7 +4,10 @@ import jwt from "jsonwebtoken";
 const TEAM_ID = process.env.APPLE_TEAM_ID!;
 const KEY_ID = process.env.APPLE_KEY_ID!;
 
-const privateKey = process.env.APPLE_PRIVATE_KEY!.replace(/\\n/g, "\n");
+const privateKey = process.env.APPLE_PRIVATE_KEY?.replace(
+  /\\n/g,
+  "\n"
+) as string;
 
 export async function GET() {
   try {
