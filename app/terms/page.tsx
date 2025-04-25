@@ -10,7 +10,7 @@ export default function Terms() {
       <Link href='/' className="mb-5"><Button><ArrowLeft /> Back</Button></Link>
       <h1 className="text-2xl font-semibold">Terms and Conditions</h1>
 
-      <p><strong>Effective Date:</strong> [Insert Date]</p>
+      <p><strong>Effective Date:</strong> April 25, 2025.</p>
 
       <p>{"Welcome to Music Streamer Transfer (\"we\", \"our\", or \"us\"). These Terms and Conditions (\"Terms\") govern your use of our service that facilitates the transfer of playlists and music libraries between music streaming platforms (\"Service\")."}</p>
 
@@ -45,7 +45,7 @@ export default function Terms() {
       <p>We may update these Terms at any time.</p>
 
       <h2 className="text-xl font-semibold mt-6">10. Contact Us</h2>
-      <p>If you have any questions about these Terms, contact us at [support@example.com].</p>
+      <p>If you have any questions about these Terms, contact us at samuel@arbibe.org.</p>
       <Link href='/' className="mt-5"><Button><ArrowLeft /> Back</Button></Link>
     </div>
   )
