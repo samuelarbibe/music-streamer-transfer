@@ -142,7 +142,7 @@ export default function TransferStep(props: IStepProps) {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Warning</AlertTitle>
                 <AlertDescription>
-                  Do not exit this page while playlists are transfering.
+                  Do not exit this page while playlists are transferring.
                 </AlertDescription>
               </Alert>
             </>

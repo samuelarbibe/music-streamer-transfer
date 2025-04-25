@@ -4,12 +4,13 @@ import React, { useState } from "react"
 
 import { ModeToggle } from "@/components/ui/mode-toggle"
 
-import ColourfulText from "@/components/ui/colourful-text"
 import LoginStep from "@/components/steps/login-step"
 import PlaylistSelectionStep from "@/components/steps/playlist-selection-step"
 import TransferStep from "@/components/steps/transfer-step"
-import { ServiceId, sourceServiceIdAtom, targetServiceIdAtom } from "@/lib/services"
+import { ServiceId, services, sourceServiceIdAtom, targetServiceIdAtom } from "@/lib/services"
 import { useAtom } from "jotai/react"
+import { ArrowRight } from "lucide-react"
+import { TypingAnimation } from "@/components/magicui/typing-animation"
 
 export interface IStepProps {
   sourceServiceId: ServiceId,
@@ -31,15 +32,26 @@ export default function TransferPage() {
   const StepComponent = stepComponents[step - 1]
 
   return (
-    <div className="container mx-auto max-w-3xl min-h-screen flex flex-col items-center justify-center gap-10 px-5 py-30 md:pt-0">
-      <h1 className="text-6xl font-bold text-center flex flex-col md:flex-row gap-4">
-        <div>
-          Transfer your
+    <div className="container mx-auto max-w-3xl min-h-screen flex flex-col items-center justify-center gap-10 px-5 pt-20 md:pt-0">
+      <div className="font-bold text-center flex flex-col gap-2 items-center">
+        <span className="text-4xl">Transfer your Music</span>
+        <div className="text-2xl flex flex-row items-center text-neutral-500">
+          {
+            sourceServiceId &&
+            <>
+              <TypingAnimation duration={50}>{services[sourceServiceId].name}</TypingAnimation>
+              <ArrowRight className="font-medium mx-2" />
+            </>
+          }
+          {
+
+            targetServiceId &&
+            <>
+              <TypingAnimation duration={50}>{services[targetServiceId].name}</TypingAnimation>
+            </>
+          }
         </div>
-        <div>
-          <ColourfulText text="Music" />
-        </div>
-      </h1>
+      </div>
 
       {
         sourceServiceId && targetServiceId && step >= 1

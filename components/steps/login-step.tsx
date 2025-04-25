@@ -20,9 +20,9 @@ export default function LoginStep(props: LoginStepProps) {
 
   return (
     <>
-      <div className="w-full flex flex-col md:flex-row relative gap-12">
-        <div className="flex flex-col flex-1 space-y-5">
-          <h2 className="text-lg font-medium">Source</h2>
+      <div className="w-full flex flex-col md:flex-row relative gap-6">
+        <div className="flex flex-col flex-1 space-y-3">
+          <h2 className="text-xl font-medium">Source</h2>
           <ServiceSelect
             value={sourceServiceId}
             onChange={setSourceServiceId}
@@ -34,8 +34,8 @@ export default function LoginStep(props: LoginStepProps) {
           }
         </div>
 
-        <div className="flex flex-col flex-1 space-y-5">
-          <h2 className="text-lg font-medium">Target</h2>
+        <div className="flex flex-col flex-1 space-y-3">
+          <h2 className="text-xl font-medium">Target</h2>
           <ServiceSelect
             value={targetServiceId}
             onChange={setTargetServiceId}
