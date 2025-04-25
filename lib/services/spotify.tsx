@@ -188,7 +188,6 @@ export const useSpotifyTrackIds = (tracks?: Track[]) => {
 
       const result: string[] = []
 
-      // TODO: remove slice
       for (const track of tracks) {
         const query = `track:${track.name} artist:${track.artists[0]}`
 

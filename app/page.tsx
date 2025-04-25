@@ -44,7 +44,6 @@ export default function TransferPage() {
             </>
           }
           {
-
             targetServiceId &&
             <>
               <TypingAnimation duration={50} className="text-xl md:text-2xl">{services[targetServiceId].name}</TypingAnimation>
