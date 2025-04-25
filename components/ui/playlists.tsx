@@ -28,7 +28,7 @@ export default function Playlists(props: PlaylistsProps) {
             })}
           >
             <Checkbox checked={sourcePlaylistsIds.has(playlist.id)} />
-            <img src={playlist.image} className="h-12 w-12 object-cover" />
+            <img src={playlist.image} className="h-12 w-12 object-cover rounded-[2px] md:rounded-[4px]" />
             <div className="flex flex-col items-start">
               <div className="flex flex-row items-center">
                 <span className="text-lg">{playlist.name}</span>
