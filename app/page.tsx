@@ -11,6 +11,7 @@ import { ServiceId, services, sourceServiceIdAtom, targetServiceIdAtom } from "@
 import { useAtom } from "jotai/react"
 import { ArrowRight } from "lucide-react"
 import { TypingAnimation } from "@/components/magicui/typing-animation"
+import Link from "next/link"
 
 export interface IStepProps {
   sourceServiceId: ServiceId,
@@ -32,7 +33,7 @@ export default function TransferPage() {
   const StepComponent = stepComponents[step - 1]
 
   return (
-    <div className="container mx-auto max-w-3xl min-h-screen flex flex-col items-center justify-center gap-10 px-5 pt-20 md:pt-0">
+    <div className="container mx-auto max-w-3xl min-h-screen flex flex-col items-center justify-center gap-5 md:gap-10 px-5 py-10">
       <div className="font-bold text-center flex flex-col gap-2 items-center">
         <span className="text-4xl">Transfer your Music</span>
         <div className="flex flex-row items-center text-neutral-500">
@@ -65,6 +66,8 @@ export default function TransferPage() {
           : <LoginStep handleContinue={() => setStep(prev => prev + 1)}
           />
       }
+
+      <Link href='/terms' className="text-neutral-500 hover:text-neutral-300">Terms and Conditions</Link>
 
       <div className="absolute top-4 right-4">
         <ModeToggle />

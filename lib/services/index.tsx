@@ -33,6 +33,7 @@ export type Playlist = {
   name: string,
   description?: string,
   image: string,
+  link?: string,
   trackCount?: number
 }
 

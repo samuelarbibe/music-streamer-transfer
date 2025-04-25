@@ -104,6 +104,7 @@ export const useSpotifyPlaylists = (enabled: boolean) => {
         name: spotifyPlaylist.name,
         description: spotifyPlaylist.description,
         image: spotifyPlaylist.images[0].url,
+        link: spotifyPlaylist.uri,
         trackCount: spotifyPlaylist.tracks?.total ?? 0
       }))
     },
