@@ -35,11 +35,11 @@ export default function TransferPage() {
     <div className="container mx-auto max-w-3xl min-h-screen flex flex-col items-center justify-center gap-10 px-5 pt-20 md:pt-0">
       <div className="font-bold text-center flex flex-col gap-2 items-center">
         <span className="text-4xl">Transfer your Music</span>
-        <div className="text-2xl flex flex-row items-center text-neutral-500">
+        <div className="flex flex-row items-center text-neutral-500">
           {
             sourceServiceId &&
             <>
-              <TypingAnimation duration={50}>{services[sourceServiceId].name}</TypingAnimation>
+              <TypingAnimation duration={50} className="text-xl md:text-2xl">{services[sourceServiceId].name}</TypingAnimation>
               <ArrowRight className="font-medium mx-2" />
             </>
           }
@@ -47,7 +47,7 @@ export default function TransferPage() {
 
             targetServiceId &&
             <>
-              <TypingAnimation duration={50}>{services[targetServiceId].name}</TypingAnimation>
+              <TypingAnimation duration={50} className="text-xl md:text-2xl">{services[targetServiceId].name}</TypingAnimation>
             </>
           }
         </div>
