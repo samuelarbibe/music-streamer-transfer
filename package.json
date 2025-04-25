@@ -22,7 +22,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.6.3",
-    "fuse.js": "^7.1.0",
     "immutability-helper": "^3.1.1",
     "jotai": "^2.12.2",
     "jsonwebtoken": "^9.0.2",

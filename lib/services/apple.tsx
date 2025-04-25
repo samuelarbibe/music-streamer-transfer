@@ -6,7 +6,6 @@ import { AddTracksToPlaylistProps, Playlist, ServiceProfile, Track } from "."
 import { atom } from 'jotai/vanilla';
 import { useAtom } from 'jotai/react';
 import axios from "axios";
-import Fuse from 'fuse.js'
 
 export const appleAtom = atom<MusicKit.MusicKitInstance>()
 
@@ -195,11 +194,7 @@ export const useAppleTrackIds = (tracks?: Track[]) => {
         }
         const res = await appleMusic.api.music(url, queryParams) as MusicKit.SearchResponse<MusicKit.Songs>
 
-        const searchResults = res.data.results?.["songs"]?.data ?? []
-        const fuse = new Fuse(searchResults, { keys: ["attributes.artistName", "attributes.name"] })
-        const bestResult = fuse.search(searchTerm)
-
-        const appleTrackId = bestResult[0]?.item.id
+        const appleTrackId = res.data.results?.["songs"]?.data[0].id
         if (appleTrackId) {
           result.push(appleTrackId)
         }
