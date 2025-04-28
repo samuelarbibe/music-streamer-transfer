@@ -13,6 +13,7 @@ import AddTracksToPlaylistStep from "./transfer/add-tracks-to-playlist-step";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertCircle, Check } from "lucide-react";
 import { Button } from "../ui/button";
+import { usePostHog } from "posthog-js/react";
 
 interface PlaylistTransferProps {
   sourceServiceId: ServiceId
@@ -23,7 +24,7 @@ interface PlaylistTransferProps {
 
 export interface TransferStepProps {
   handleContinue: () => void
-  handleError: (message: string) => void
+  handleError: (error: unknown) => void
 }
 
 const steps = [
@@ -45,8 +46,9 @@ type PlaylistTransferContextType = PlaylistTransferProps & {
 export const PlaylistTransferContext = createContext<PlaylistTransferContextType>({} as PlaylistTransferContextType)
 
 function PlaylistTransfer(props: PlaylistTransferProps) {
+  const posthog = usePostHog()
   const [currentStep, setCurrentStep] = useState(0)
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<unknown>()
 
   const [sourceTracks, setSourceTracks] = useState<Track[]>()
   const [targetTrackIds, setTargetTrackIds] = useState<string[]>()
@@ -58,9 +60,10 @@ function PlaylistTransfer(props: PlaylistTransferProps) {
     setCurrentStep((prev) => prev + 1)
   }, [])
 
-  const handleError = useCallback((error: string) => {
+  const handleError = useCallback((error: unknown) => {
+    posthog.captureException(error)
     setError(error)
-  }, [])
+  }, [posthog])
 
   useEffect(() => {
     if (currentStep === steps.length) {
@@ -104,7 +107,7 @@ function PlaylistTransfer(props: PlaylistTransferProps) {
             }
           </div>
           {
-            error &&
+            !!error &&
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>

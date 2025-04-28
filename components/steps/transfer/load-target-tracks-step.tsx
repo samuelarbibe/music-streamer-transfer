@@ -19,7 +19,7 @@ export default function LoadTargetTracksStep({ handleContinue, handleError }: Tr
 
   useEffect(() => {
     if (error) {
-      handleError(error.message)
+      handleError(error)
     }
   }, [error, handleError])
 

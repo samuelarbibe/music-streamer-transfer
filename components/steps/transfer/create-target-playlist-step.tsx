@@ -29,7 +29,7 @@ export default function CreateTargetPlaylistStep({ handleContinue, handleError }
 
   useEffect(() => {
     if (error) {
-      handleError(error.message)
+      handleError(error)
     }
   }, [error, handleError])
 
