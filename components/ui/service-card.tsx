@@ -26,7 +26,7 @@ export default function ServiceCard({ serviceId, handleLogin, handleLogout }: Se
           {services[serviceId].name}
         </span>
       </div>
-      <div className="rounded-full bg-muted">
+      <div className="rounded-full bg-muted ph-mask">
         {
           profile
             ? profile.imageUrl
@@ -35,7 +35,7 @@ export default function ServiceCard({ serviceId, handleLogin, handleLogout }: Se
             : <Lock className={"size-5 md:size-7 m-2 md:m-4"} />
         }
       </div>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-muted-foreground ph-mask">
         {
           isAuthenticated && profile
             ? `Logged in as ${profile.name}`

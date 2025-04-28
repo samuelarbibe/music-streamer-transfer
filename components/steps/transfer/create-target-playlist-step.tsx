@@ -59,7 +59,7 @@ export default function CreateTargetPlaylistStep({ handleContinue, handleError }
       return (
         <>
           <Check className="size-5 text-chart-2" />
-          <span className="text-sm">{`Playlist "${sourcePlaylist?.name}" Created in ${services[targetServiceId].name}.`}</span>
+          <span className="text-sm ph-mask">{`Playlist "${sourcePlaylist?.name}" Created in ${services[targetServiceId].name}.`}</span>
         </>
       )
     }
@@ -68,7 +68,7 @@ export default function CreateTargetPlaylistStep({ handleContinue, handleError }
       return (
         <>
           <Check className="size-5 text-chart-2" />
-          <span className="text-sm">{`Playlist "${sourcePlaylist?.name}" Already exists in ${services[targetServiceId].name}.`}</span>
+          <span className="text-sm ph-mask">{`Playlist "${sourcePlaylist?.name}" Already exists in ${services[targetServiceId].name}.`}</span>
         </>
       )
     }
@@ -76,7 +76,7 @@ export default function CreateTargetPlaylistStep({ handleContinue, handleError }
     return (
       <>
         <LoaderCircle className="size-5 animate-spin" />
-        <span className="text-sm animate-pulse">{`Creating Playlist "${sourcePlaylist?.name}" in ${services[targetServiceId].name}...`}</span>
+        <span className="text-sm animate-pulse ph-mask">{`Creating Playlist "${sourcePlaylist?.name}" in ${services[targetServiceId].name}...`}</span>
       </>
     )
   }

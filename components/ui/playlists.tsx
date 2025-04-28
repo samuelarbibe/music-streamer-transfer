@@ -33,7 +33,7 @@ export default function Playlists(props: PlaylistsProps) {
             <img src={playlist.image} className="h-12 w-12 object-cover rounded-[2px] md:rounded-[4px]" />
             <div className="flex flex-col items-start">
               <div className="flex flex-row items-center">
-                <span className="text-lg">{playlist.name}</span>
+                <span className="text-lg ph-mask">{playlist.name}</span>
                 {
                   playlist.link &&
                   <a href={playlist.link} target='_blank' rel="noopener noreferrer"><ExternalLink className="mx-2 size-4" /></a>

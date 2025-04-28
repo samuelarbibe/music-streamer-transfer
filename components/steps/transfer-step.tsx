@@ -87,7 +87,7 @@ function PlaylistTransfer(props: PlaylistTransferProps) {
             <div className="flex flex-row gap-4">
               <img src={sourcePlaylist.image} className="h-12 w-12 object-cover rounded-[2px] md:rounded-[4px]" />
               <div className="flex flex-col items-start">
-                <span className="text-lg">{sourcePlaylist.name}</span>
+                <span className="text-lg ph-mask">{sourcePlaylist.name}</span>
                 {
                   sourcePlaylist.trackCount &&
                   <span className="text-sm text-muted-foreground">{`${sourcePlaylist.trackCount} tracks`}</span>
