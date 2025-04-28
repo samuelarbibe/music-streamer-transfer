@@ -34,7 +34,7 @@ export const useSpotifyProfile = () => {
 
       return {
         name: profile.display_name,
-        imageUrl: profile.images[0].url
+        imageUrl: profile.images?.[0]?.url
       }
     },
   })
@@ -105,7 +105,7 @@ export const useSpotifyPlaylists = (enabled: boolean) => {
         id: spotifyPlaylist.id,
         name: spotifyPlaylist.name,
         description: spotifyPlaylist.description,
-        image: spotifyPlaylist.images[0].url,
+        image: spotifyPlaylist.images?.[0]?.url,
         link: spotifyPlaylist.uri,
         trackCount: spotifyPlaylist.tracks?.total ?? 0
       }))
@@ -128,7 +128,7 @@ export const useSpotifyPlaylistById = (playlistId?: string) => {
       return {
         id: data.id,
         name: data.name,
-        image: data.images[0].url,
+        image: data.images?.[0]?.url,
         description: data.description,
         trackCount: data.tracks.total
       }
