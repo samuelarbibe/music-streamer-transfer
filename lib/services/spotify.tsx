@@ -24,7 +24,7 @@ export const useSpotifyProfile = () => {
   const { data: isAuthenticated } = useIsSpotifyAuthenticated()
 
   return useQuery<ServiceProfile | null>({
-    queryKey: ["spotify", "profile", isAuthenticated],
+    queryKey: ["spotify", "profile", isAuthenticated, !!spotify],
     queryFn: async () => {
       if (!spotify) return null
 
@@ -46,13 +46,13 @@ export const useIsSpotifyAuthenticated = () => {
   const [spotifyAccessToken] = useAtom(spotifyAccessTokenAtom)
 
   return useQuery({
-    queryKey: ["spotify", "authenticated", !!spotifyAccessToken],
+    queryKey: ["spotify", "authenticated", !!spotifyAccessToken, !!spotify],
     queryFn: async () => {
       if (!spotify) return false
 
-      const accessToken = await spotify.currentUser.profile().catch(() => null)
+      const profile = await spotify.currentUser.profile().catch(() => null)
 
-      if (!accessToken) {
+      if (!profile) {
         signOut()
         return false
       }

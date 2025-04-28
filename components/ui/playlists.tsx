@@ -17,7 +17,7 @@ export default function Playlists(props: PlaylistsProps) {
       {
         props.playlists.map((playlist) => (
           <div
-            key={playlist.name}
+            key={playlist.id}
             className="border-b p-4 flex flex-row gap-4 items-center hover:bg-muted"
             onClick={() => setSourcePlaylistsIds((prev) => {
               const next = new Set(prev)
