@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { googleAccessTokenAtom, googleOauthStateAtom } from "@/lib/services/google";
 import { useAtomValue, useSetAtom } from "jotai/react";

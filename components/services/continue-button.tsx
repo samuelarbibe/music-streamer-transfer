@@ -1,3 +1,5 @@
+"use client"
+
 import { ServiceId, useIsServiceAuthenticated } from "@/lib/services";
 import { Button } from "../ui/button";
 

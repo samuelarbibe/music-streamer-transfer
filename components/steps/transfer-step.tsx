@@ -1,3 +1,5 @@
+"use client"
+
 import { IStepProps } from "@/app/page";
 import { useAtom } from "jotai/react";
 import { ServiceId, sourcePlaylistsIdsAtom, Track } from "@/lib/services";

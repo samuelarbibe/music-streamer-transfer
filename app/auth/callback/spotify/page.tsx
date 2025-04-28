@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
 import { spotifyAccessTokenAtom } from "@/lib/services/spotify";
-import { AuthorizationCodeWithPKCEStrategy, SpotifyApi } from "@spotify/web-api-ts-sdk";
+import { AuthenticationResponse, AuthorizationCodeWithPKCEStrategy, SpotifyApi } from "@spotify/web-api-ts-sdk";
 import { useSetAtom } from "jotai/react";
 import { useEffect } from "react"
 
@@ -17,7 +17,7 @@ export default function SpotifyAuthCallback() {
       const auth = new AuthorizationCodeWithPKCEStrategy(clientId, redirectUrl, activeScopes);
       const internalSdk = new SpotifyApi(auth);
 
-      const { authenticated, accessToken } = await internalSdk.authenticate()
+      const { authenticated, accessToken } = await internalSdk.authenticate().catch(() => ({ authenticated: false }) as AuthenticationResponse)
 
       if (authenticated) {
         setAccessToken(accessToken)

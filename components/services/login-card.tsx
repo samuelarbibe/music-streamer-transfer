@@ -1,3 +1,5 @@
+"use client"
+
 import { ServiceId, useSignIn, useSignOut } from "@/lib/services";
 import ServiceCard from "../ui/service-card";
 

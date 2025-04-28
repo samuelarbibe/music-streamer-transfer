@@ -1,3 +1,5 @@
+"use client"
+
 import { ScrollArea } from "./scroll-area"
 import { Checkbox } from "./checkbox"
 import { useAtom } from "jotai/react"

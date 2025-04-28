@@ -1,3 +1,5 @@
+"use client"
+
 import { services, useCreatePlaylist, usePlaylistById, usePlaylists } from "@/lib/services"
 import { PlaylistTransferContext, TransferStepProps } from "../transfer-step"
 import { LoaderCircle, Check } from "lucide-react"

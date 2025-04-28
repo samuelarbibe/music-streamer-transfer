@@ -1,3 +1,5 @@
+"use client"
+
 import { sourcePlaylistsIdsAtom } from "@/lib/services"
 import { useAtom } from "jotai/react"
 import { Button } from "../ui/button"

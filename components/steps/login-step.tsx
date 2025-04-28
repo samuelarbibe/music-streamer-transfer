@@ -1,3 +1,5 @@
+"use client"
+
 import { ServiceId, services, sourceServiceIdAtom, targetServiceIdAtom } from "@/lib/services"
 import { useAtom } from "jotai/react"
 import LoginCard from "../services/login-card"
