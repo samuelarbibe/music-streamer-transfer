@@ -57,6 +57,7 @@ export const useIsSpotifyAuthenticated = () => {
       console.log(profile)
 
       if (!profile) {
+        console.log("Logging out")
         signOut()
         return false
       }
