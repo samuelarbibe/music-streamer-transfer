@@ -30,11 +30,12 @@ export const useSpotifyProfile = () => {
     queryFn: async () => {
       if (!spotify) return null
 
-      const res = await spotify.currentUser.profile()
+      const profile = await spotify.currentUser.profile()
+      console.log(profile)
 
       return {
-        name: res.display_name,
-        imageUrl: res.images[0].url
+        name: profile.display_name,
+        imageUrl: profile.images[0].url
       }
     },
   })
@@ -53,6 +54,7 @@ export const useIsSpotifyAuthenticated = () => {
       if (!spotify) return false
 
       const profile = await spotify.currentUser.profile().catch(() => null)
+      console.log(profile)
 
       if (!profile) {
         signOut()
