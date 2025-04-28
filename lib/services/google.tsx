@@ -1,3 +1,5 @@
+"use client"
+
 import { useMutation, UseMutationOptions, useQuery } from "@tanstack/react-query"
 import { AddTracksToPlaylistProps, Playlist, ServiceProfile, Track } from "."
 import { delay, generateOAuthState } from "../utils"

@@ -1,3 +1,5 @@
+"use client"
+
 import SpotifyIcon from "@/assets/icons/spotify.svg";
 import YoutubeIcon from "@/assets/icons/youtube.svg";
 import AppleIcon from "@/assets/icons/apple.svg";

@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import { AccessToken, AuthorizationCodeWithPKCEStrategy, Page, PlaylistedTrack, SearchResults, SpotifyApi, Track as SpotifyTrack } from '@spotify/web-api-ts-sdk';
 import { useMutation, UseMutationOptions, useQuery } from "@tanstack/react-query"
