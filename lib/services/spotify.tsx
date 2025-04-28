@@ -31,7 +31,6 @@ export const useSpotifyProfile = () => {
       if (!spotify) return null
 
       const profile = await spotify.currentUser.profile()
-      console.log(profile)
 
       return {
         name: profile.display_name,
@@ -54,10 +53,8 @@ export const useIsSpotifyAuthenticated = () => {
       if (!spotify) return false
 
       const profile = await spotify.currentUser.profile().catch(() => null)
-      console.log(profile)
 
       if (!profile) {
-        console.log("Logging out")
         signOut()
         return false
       }
