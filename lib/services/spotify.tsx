@@ -18,7 +18,7 @@ export const spotifyAtom = atom((get) => {
 
   if (!accessToken) return
 
-  return SpotifyApi.withAccessToken(clientId, accessToken)
+  return SpotifyApi.withAccessToken(clientId, accessToken, { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) })
 })
 
 export const useSpotifyProfile = () => {
