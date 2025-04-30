@@ -60,12 +60,12 @@ function PlaylistTransfer(props: PlaylistTransferProps) {
   }, [])
 
   const handleError = useCallback((error: unknown) => {
-    setError(error)
+      posthog.captureException(error)
+      setError(error)
   }, [])
 
   useEffect(() => {
     if (currentStep === steps.length) {
-      posthog.captureException({ text: "hello" })
       props.handleContinue()
     }
   }, [currentStep, props])
