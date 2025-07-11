@@ -174,6 +174,14 @@ export const useApplePlaylistTracksById = (playlistId?: string) => {
   })
 }
 
+const getSearchTerm = (trackName: string, artist: string) => {
+  if (trackName.length > 15) {
+    return `${trackName} by ${artist}`
+  }
+
+  return `${trackName} ${artist}`
+}
+
 export const useAppleTrackIds = (tracks?: Track[]) => {
   const requestDelay = 100
   const [progress, setProgress] = useState(0)
@@ -187,12 +195,11 @@ export const useAppleTrackIds = (tracks?: Track[]) => {
       const result: string[] = []
 
       for (const track of tracks) {
-        const searchTerm = `${track.name} ${track.artists[0]}`
+        const searchTerm = getSearchTerm(track.name, track.artists[0])
         const url = `/v1/catalog/${appleMusic.storefrontId}/search`
         const queryParams = {
           term: searchTerm,
-          limit: 5,
-          types: ["songs"]
+          limit: 1
         }
         const res = await appleMusic.api.music(url, queryParams) as MusicKit.SearchResponse<MusicKit.Songs>
 
